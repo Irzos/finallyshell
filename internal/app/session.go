@@ -46,6 +46,8 @@ type Session struct {
 	sftp   *sftp.Client
 	files  fileState
 
+	tunnels tunnelState // see tunnels.go
+
 	hostKeyQ *sshx.HostKeyQuestion
 	cancel   context.CancelFunc
 
@@ -118,6 +120,7 @@ func (a *App) connect(s *Session, secret string) {
 			a.post(func() {
 				if s.status == statusConnected && s.cancel != nil {
 					s.status, s.err = statusClosed, errConnectionLost
+					s.stopTunnels()
 				}
 			})
 		}
@@ -141,6 +144,7 @@ func (a *App) connect(s *Session, secret string) {
 			s.client, s.term, s.ip = client, term, ip
 			s.status, s.err = statusConnected, nil
 			a.noteConnected(s.Host)
+			a.startTunnels(s, h.Tunnels)
 		})
 		// The monitor polls with an exec channel; hosts that drop extra
 		// channels turn it off.
@@ -244,6 +248,7 @@ func (s *Session) disconnect() {
 		s.hostKeyQ.Answer <- false
 		s.hostKeyQ = nil
 	}
+	s.stopTunnels()
 	if s.sftp != nil {
 		s.sftp.Close()
 		s.sftp = nil
