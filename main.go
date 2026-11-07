@@ -12,7 +12,7 @@ func main() {
 		var win *mygo.Window
 		app := newApp(func(fn func()) { win.Update(fn) })
 		win = mygo.NewWindow(mygo.WindowOptions{
-			Title:     "GoSSH",
+			Title:     "Finalshelly",
 			Width:     1280,
 			Height:    820,
 			MinWidth:  900,

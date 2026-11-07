@@ -22,7 +22,7 @@ func (c idleConn) Write(p []byte) (int, error) { return len(p), nil }
 func (c idleConn) Close() error                { return nil }
 
 func testApp(t *testing.T) *App {
-	t.Setenv("GOSSH_DIR", t.TempDir())
+	t.Setenv("FINALSHELLY_DIR", t.TempDir())
 	a := newApp(func(fn func()) { fn() })
 	a.saveHostsFunc = func([]*Host) error { return nil }
 	return a

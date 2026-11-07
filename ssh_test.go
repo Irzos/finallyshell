@@ -12,20 +12,20 @@ import (
 )
 
 // TestSSH runs against a real server, named as user:password@host:port
-// by GOSSH_TEST_SSH:
+// by FINALSHELLY_TEST_SSH:
 //
-//	GOSSH_TEST_SSH=tester:secret@127.0.0.1:2222 go test -run SSH
+//	FINALSHELLY_TEST_SSH=tester:secret@127.0.0.1:2222 go test -run SSH
 func TestSSH(t *testing.T) {
-	spec := os.Getenv("GOSSH_TEST_SSH")
+	spec := os.Getenv("FINALSHELLY_TEST_SSH")
 	if spec == "" {
-		t.Skip("GOSSH_TEST_SSH not set")
+		t.Skip("FINALSHELLY_TEST_SSH not set")
 	}
 	cred, addr, _ := strings.Cut(spec, "@")
 	user, pass, _ := strings.Cut(cred, ":")
 	hostname, portStr, _ := strings.Cut(addr, ":")
 	port, _ := strconv.Atoi(portStr)
 
-	t.Setenv("GOSSH_DIR", t.TempDir())
+	t.Setenv("FINALSHELLY_DIR", t.TempDir())
 	posts := make(chan func(), 256)
 	a := newApp(func(fn func()) { posts <- fn })
 	a.saveHostsFunc = func([]*Host) error { return nil }

@@ -1,4 +1,4 @@
-# GoSSH
+# Finalshelly
 
 一个仿 FinalShell 布局的 SSH 客户端，纯 Go 编写，界面用 [MyGo](https://github.com/egoist/mygo) 的原生 UI，终端是 MyGo 的 terminal 插件（底层 libghostty-vt，运行时加载，不需要 cgo）。
 
@@ -19,13 +19,13 @@ go test ./...
 用真实服务器跑集成测试：
 
 ```sh
-GOSSH_TEST_SSH=user:password@127.0.0.1:22 go test -run SSH -v
+FINALSHELLY_TEST_SSH=user:password@127.0.0.1:22 go test -run SSH -v
 ```
 
 ## 目前有的功能
 
-- 连接管理器：新建、编辑、删除主机，密码或私钥登录。主机列表存在 `<用户配置目录>/gossh/hosts.json`，密码不落盘，只存在内存里。
-- 第一次连接时弹窗显示主机指纹，信任后记入 `gossh/known_hosts`；指纹变化时拒绝连接。
+- 连接管理器：新建、编辑、删除主机，密码或私钥登录。主机列表存在 `<用户配置目录>/finalshelly/hosts.json`，密码不落盘，只存在内存里。
+- 第一次连接时弹窗显示主机指纹，信任后记入 `finalshelly/known_hosts`；指纹变化时拒绝连接。
 - 左上：当前会话服务器的 IP、运行时间、负载、CPU/内存/交换、内存占用前 5 的进程、网速和延迟曲线、磁盘。每 2 秒通过 SSH 读取一次 `/proc`，只支持 Linux 服务器。
 - 左下：竖向会话列表，状态点（绿：已连接，黄：连接中，红：失败），右键菜单（重新连接、复制会话、断开、关闭），拖动排序。
 - 右上：终端。断开后保留最后的画面，顶部出现“重新连接”。

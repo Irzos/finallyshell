@@ -54,14 +54,14 @@ func (h *Host) target() string {
 func newHostID() string { return fmt.Sprintf("h%d", time.Now().UnixNano()) }
 
 func configDir() string {
-	if d := os.Getenv("GOSSH_DIR"); d != "" {
+	if d := os.Getenv("FINALSHELLY_DIR"); d != "" {
 		return d
 	}
 	d, err := os.UserConfigDir()
 	if err != nil {
 		d = "."
 	}
-	return filepath.Join(d, "gossh")
+	return filepath.Join(d, "finalshelly")
 }
 
 func hostsPath() string { return filepath.Join(configDir(), "hosts.json") }

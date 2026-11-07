@@ -1,4 +1,4 @@
-module gossh
+module finalshelly
 
 go 1.27.3
 
