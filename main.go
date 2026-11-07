@@ -1,4 +1,4 @@
-// Finalshelly is an SSH client laid out as FinalShell, with its session
+// Finallyshell is an SSH client laid out as FinalShell, with its session
 // tabs down the side.
 package main
 
@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"finalshelly/internal/app"
-	"finalshelly/internal/config"
-	"finalshelly/locales"
+	"finallyshell/internal/app"
+	"finallyshell/internal/config"
+	"finallyshell/locales"
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
@@ -200,7 +200,7 @@ func (p *platform) ShowTransfers(count int, progress float64) {
 func (p *platform) TempDir() string {
 	dir, err := mygo.App.Path(mygo.PathCache)
 	if err != nil || dir == "" {
-		dir = filepath.Join(os.TempDir(), "finalshelly")
+		dir = filepath.Join(os.TempDir(), "finallyshell")
 	}
 	return filepath.Join(dir, "opened")
 }

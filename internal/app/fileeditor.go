@@ -23,9 +23,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"finalshelly/internal/config"
-	"finalshelly/internal/remotefs"
-	"finalshelly/locales"
+	"finallyshell/internal/config"
+	"finallyshell/internal/remotefs"
+	"finallyshell/locales"
 
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/editor"

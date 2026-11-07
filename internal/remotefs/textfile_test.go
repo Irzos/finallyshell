@@ -108,7 +108,7 @@ func noTemp(t *testing.T, dir string) {
 	t.Helper()
 	entries, _ := os.ReadDir(dir)
 	for _, e := range entries {
-		if strings.Contains(e.Name(), ".finalshelly-") {
+		if strings.Contains(e.Name(), ".finallyshell-") {
 			t.Errorf("left %s behind", e.Name())
 		}
 	}

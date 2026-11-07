@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"finalshelly/locales"
+	"finallyshell/locales"
 
 	"github.com/egoist/mygo/ui/editor"
 	"golang.org/x/text/encoding"

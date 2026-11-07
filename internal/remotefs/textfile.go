@@ -167,7 +167,7 @@ func tempName(p string) string {
 	}
 	var r [6]byte
 	rand.Read(r[:])
-	return path.Join(path.Dir(p), "."+base+".finalshelly-"+hex.EncodeToString(r[:])+".tmp")
+	return path.Join(path.Dir(p), "."+base+".finallyshell-"+hex.EncodeToString(r[:])+".tmp")
 }
 
 // specialBits are the mode bits beyond the permissions that Chmod sets.

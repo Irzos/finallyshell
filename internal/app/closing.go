@@ -3,7 +3,7 @@ package app
 import (
 	"strings"
 
-	"finalshelly/locales"
+	"finallyshell/locales"
 )
 
 // Confirmation is a question with two answers, which the platform asks in

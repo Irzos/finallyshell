@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"finalshelly/internal/config"
-	"finalshelly/internal/sshtest"
-	"finalshelly/locales"
+	"finallyshell/internal/config"
+	"finallyshell/internal/sshtest"
+	"finallyshell/locales"
 
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/editor"
@@ -177,7 +177,7 @@ func TestFileEditorOpenEditSave(t *testing.T) {
 	}
 	entries, _ := os.ReadDir(f.dir)
 	for _, e := range entries {
-		if strings.Contains(e.Name(), ".finalshelly-") {
+		if strings.Contains(e.Name(), ".finallyshell-") {
 			t.Errorf("left %s", e.Name())
 		}
 	}
@@ -610,13 +610,13 @@ func TestFileEditorMacKeysAndTray(t *testing.T) {
 	}
 }
 
-// TestSSHFileEditor edits files on the real server FINALSHELLY_TEST_SSH
+// TestSSHFileEditor edits files on the real server FINALLYSHELL_TEST_SSH
 // names, in its home directory.
 func TestSSHFileEditor(t *testing.T) {
 	a, p, s := connectTestServer(t)
 	p.until(t, "the home directory", func() bool { return s.sftp != nil && s.files.cwd != "" && !s.files.loading })
 	sc, home := s.sftp, s.files.cwd
-	name := fmt.Sprintf("finalshelly-edit-%d", time.Now().UnixNano())
+	name := fmt.Sprintf("finallyshell-edit-%d", time.Now().UnixNano())
 	script, target, link := home+"/"+name+".sh", home+"/"+name+".conf", home+"/"+name+"-link.conf"
 	legacy := home + "/" + name + ".txt"
 	t.Cleanup(func() {
