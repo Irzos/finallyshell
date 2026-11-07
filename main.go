@@ -21,6 +21,7 @@ import (
 type platform struct {
 	win     *mygo.Window // the main window
 	windows map[app.WindowKind]*childWindow
+	tray    *mygo.Tray // while the main window is hidden in the tray
 }
 
 // childWindow is an open secondary window.
@@ -125,6 +126,14 @@ func (p *platform) SetLocale(tag string)     { mygo.App.SetLocale(tag) }
 func (p *platform) Languages() []string      { return mygo.App.Languages() }
 
 func main() {
+	// One instance at a time: launching the app again brings the running
+	// one's window back, from the tray too (raise), and two instances never
+	// write hosts.json and settings.json over each other. This runs before
+	// anything else, as MyGo reads the launch's Wayland activation token
+	// here, before GTK starts.
+	if !mygo.App.RequestSingleInstanceLock() {
+		return
+	}
 	if lang := config.LoadSettings().Language; lang != "" {
 		mygo.App.SetLocale(lang)
 	}
@@ -139,8 +148,33 @@ func main() {
 			MinHeight: 560,
 			Content:   ui.View(a.View),
 		})
+		// The close button may hide the window to the tray, or ask first;
+		// a quit may ask too (closing.go in internal/app).
+		plat.win.OnClose(func(e *mygo.CloseEvent) {
+			if !a.CloseRequested() {
+				e.PreventDefault()
+			}
+		})
+		mygo.App.OnBeforeQuit(func(e *mygo.QuitEvent) {
+			if !a.QuitRequested() {
+				e.PreventDefault()
+			}
+		})
 		// Its children close with it, before this runs.
-		plat.win.OnClosed(a.CloseAll)
+		plat.win.OnClosed(func() {
+			if plat.tray != nil {
+				plat.tray.Destroy()
+				plat.tray = nil
+			}
+			a.CloseAll()
+		})
+		// The Dock icon (macOS) shows the window hidden in the tray.
+		mygo.App.OnActivate(func(hasVisibleWindows bool) {
+			if !hasVisibleWindows {
+				plat.showMain()
+			}
+		})
+		mygo.App.OnSecondInstance(func([]string, string) { plat.raise() })
 		mygo.App.OnLocaleChanged(func(string) { plat.retitle() })
 	})
 	if err := mygo.App.Run(); err != nil {
