@@ -503,6 +503,26 @@ func TestStartPageWithoutHosts(t *testing.T) {
 	}
 }
 
+// The connection manager, where a new user imports hosts, is a click away
+// from the empty start page, and opens without the editor for a new host
+// in front of its Import.
+func TestStartPageWithoutHostsOpensManager(t *testing.T) {
+	a, p := testApp(t)
+	a.NewTab()
+	tt := ui.NewTester(a.View, 1280, 820)
+	p.tt = tt
+	tt.Frame()
+	if err := tt.Click(locales.ConnectionManager()); err != nil {
+		t.Fatalf("no connection manager button: %v; texts %q", err, tt.Texts())
+	}
+	if !a.windowOpen(WindowManager) {
+		t.Fatal("the connection manager button did not open the manager")
+	}
+	if a.windowOpen(WindowEditor) {
+		t.Error("the editor for a new host opened in front of the manager")
+	}
+}
+
 // TestStartPageShots draws the start page in both languages, for
 // SHOT_DIR.
 func TestStartPageShots(t *testing.T) {
