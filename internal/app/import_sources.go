@@ -38,6 +38,12 @@ var importTexts = map[importer.Kind]importText{
 		notFound: locales.FinalShellNotFound,
 		note:     func() string { return locales.ImportPasswordsNote(locales.ImportSourceFinalShell()) },
 	},
+	importer.SecureCRT: {
+		name:     locales.ImportSourceSecureCRT,
+		choose:   locales.ChooseSecureCRTFolder,
+		notFound: locales.SecureCRTNotFound,
+		note:     func() string { return locales.ImportPasswordsNote(locales.ImportSourceSecureCRT()) },
+	},
 	importer.MobaXterm: {
 		name:      locales.ImportSourceMobaXterm,
 		choose:    locales.ChooseMobaXtermFile,
@@ -89,6 +95,8 @@ func importProblemText(p importer.Problem, source string) string {
 		return locales.ProblemUnreadable()
 	case importer.TooLarge:
 		return locales.ProblemTooLarge()
+	case importer.TooManyFiles:
+		return locales.ProblemTooManyFiles()
 	case importer.NoHost:
 		return locales.ProblemNoHost()
 	case importer.NotSSH:

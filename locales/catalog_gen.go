@@ -4858,6 +4858,36 @@ func (msgs Messages) FinalShellNotFound() string {
 	return Catalog.Format(msgs.locale, "finalShellNotFound", nil)
 }
 
+// ImportSourceSecureCRT says "SecureCRT"
+// in the language the app shows.
+func ImportSourceSecureCRT() string { return In(i18n.Locale()).ImportSourceSecureCRT() }
+
+// ImportSourceSecureCRT says "SecureCRT"
+// in the language of msgs.
+func (msgs Messages) ImportSourceSecureCRT() string {
+	return Catalog.Format(msgs.locale, "importSourceSecureCRT", nil)
+}
+
+// ChooseSecureCRTFolder says "Choose SecureCRT's config folder"
+// in the language the app shows.
+func ChooseSecureCRTFolder() string { return In(i18n.Locale()).ChooseSecureCRTFolder() }
+
+// ChooseSecureCRTFolder says "Choose SecureCRT's config folder"
+// in the language of msgs.
+func (msgs Messages) ChooseSecureCRTFolder() string {
+	return Catalog.Format(msgs.locale, "chooseSecureCRTFolder", nil)
+}
+
+// SecureCRTNotFound says "SecureCRT's config folder was not found. Choose the folder SecureCRT keeps its settings in, the one with a Sessions f…"
+// in the language the app shows.
+func SecureCRTNotFound() string { return In(i18n.Locale()).SecureCRTNotFound() }
+
+// SecureCRTNotFound says "SecureCRT's config folder was not found. Choose the folder SecureCRT keeps its settings in, the one with a Sessions f…"
+// in the language of msgs.
+func (msgs Messages) SecureCRTNotFound() string {
+	return Catalog.Format(msgs.locale, "secureCRTNotFound", nil)
+}
+
 // ImportSourceMobaXterm says "MobaXterm"
 // in the language the app shows.
 func ImportSourceMobaXterm() string { return In(i18n.Locale()).ImportSourceMobaXterm() }
@@ -5078,6 +5108,16 @@ func ProblemTooLarge() string { return In(i18n.Locale()).ProblemTooLarge() }
 // in the language of msgs.
 func (msgs Messages) ProblemTooLarge() string {
 	return Catalog.Format(msgs.locale, "problemTooLarge", nil)
+}
+
+// ProblemTooManyFiles says "too many files: this one and those after it were not read"
+// in the language the app shows.
+func ProblemTooManyFiles() string { return In(i18n.Locale()).ProblemTooManyFiles() }
+
+// ProblemTooManyFiles says "too many files: this one and those after it were not read"
+// in the language of msgs.
+func (msgs Messages) ProblemTooManyFiles() string {
+	return Catalog.Format(msgs.locale, "problemTooManyFiles", nil)
 }
 
 // ProblemNoHost says "no host address"
