@@ -34,6 +34,7 @@ supported. [configuration.md](configuration.md) covers the files on disk;
   - [Symbolic links](#symbolic-links)
   - [File operations](#file-operations)
   - [Upload and download](#upload-and-download)
+  - [Archive transfer](#archive-transfer)
   - [Transfers tab](#transfers-tab)
   - [Downloads popover](#downloads-popover)
   - [Progress on the app icon](#progress-on-the-app-icon)
@@ -921,6 +922,61 @@ options. "Download to…" in the context menu chooses a location instead.
 With "Ask where to save each download" checked on the Transfers page, the
 download button always asks for the location first with the system's
 folder chooser.
+
+### Archive transfer
+
+A folder of many small files is slow over SFTP, which takes several round
+trips for every file. "Download as archive" and "Upload as archive…" send
+a selection packed with tar and gzip instead, as FinalShell's packed
+transfer does:
+
+- "Download as archive" is in the file table's context menu (for a folder
+  or several items, not for a single file), in the folder tree's context
+  menu (for any folder but `/`) and in the context menu of the toolbar's
+  download button (right-click it; a click still downloads). The server runs `tar -czf -` in the items' folder; the app reads
+  the stream and unpacks it into the download folder file by file.
+- "Upload as archive…" is in the file table's and the folder tree's
+  context menus and in the context menus of the toolbar's two upload
+  buttons (right-click them; a click still chooses files or a folder). It chooses
+  folders; the app packs them into a stream that the server unpacks with
+  `tar -xzf -` in the folder, which it makes first if needed. The files
+  belong to the user who logs in, whatever the owners on this computer.
+
+Both directions stream: there is no temporary archive on either side.
+Each is one transfer in the queue, like the others: the Transfers tab
+shows "Download as archive" or "Upload as archive", the progress of the
+files' bytes (counted while the transfer already runs), and the file
+being packed or unpacked. Cancel stops tar on the server and closes its
+channel; a file half written on this computer is removed. Existing items
+of the same name are asked about once before starting, then replaced.
+Folders, empty ones too, symbolic links, modes and modification times are
+kept; owners, devices and sockets are not.
+
+When `tar` is missing on the server, or fails, the transfer fails with
+what it printed, and "Retry over SFTP" sends the same items the usual
+way, one transfer each.
+
+Downloads are unpacked safely: names that are absolute, have `..` or are
+outside the items asked for stop the transfer; nothing is written
+through a symbolic link (a link where a folder goes is replaced by the
+folder, as tar does); a hard link may only point to a file the same
+download wrote; setuid, setgid and sticky bits are dropped. The gzip
+stream is read to its end, and when its checksum or size does not match,
+the transfer fails and says that the files unpacked from it may be
+wrong. On Windows, names that Windows does not allow (such as `a:b` or `CON`) fail
+the transfer with the name; they are not renamed.
+
+Some symbolic links are not created, and the rest of the download is:
+
+- Links that point outside the download folder: by their target, or
+  through other links once everything is unpacked (`a -> b/../..` where
+  `b -> ..`), on the disk as it is.
+- On Windows, all links when Windows does not allow the user to create
+  them (it does in Developer Mode or for administrators).
+
+The transfer then ends as done, with a warning line such as "2 links were
+not created: they point outside the folder"; its tooltip lists the links.
+"Retry over SFTP" is not offered for it.
 
 ### Transfers tab
 

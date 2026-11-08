@@ -175,6 +175,44 @@
   "replace": "Replace",
   "uploadDirection": "Upload",
   "downloadDirection": "Download",
+  "uploadAsArchive": "Upload as archive…",
+  "downloadAsArchive": "Download as archive",
+  "chooseArchiveUpload": "Choose folders to upload as an archive",
+  "uploadArchiveDirection": "Upload as archive",
+  "downloadArchiveDirection": "Download as archive",
+  "archiveItems": "{name} and {count} more",
+  "@archiveItems": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "archivePacking": "Packing {file}",
+  "archiveUnpacking": "Unpacking {file}",
+  "retryOverSftp": "Retry over SFTP",
+  "archiveLinksOutside": "{count, plural, one {# link was not created: it points outside the folder} other {# links were not created: they point outside the folder}}",
+  "@archiveLinksOutside": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "archiveLinksNotAllowed": "{count, plural, one {# link was not created: Windows allows links only in Developer Mode or for administrators} other {# links were not created: Windows allows links only in Developer Mode or for administrators}}",
+  "@archiveLinksNotAllowed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "archiveWindowsName": "{name} is not a valid file name on Windows",
+  "archiveNoShell": "No SSH connection to run tar over",
+  "archiveDamaged": "The archive arrived damaged ({error}): the files unpacked from it may be wrong. Download it again.",
   "managerTitle": "Connections",
   "newHost": "New",
   "edit": "Edit",
