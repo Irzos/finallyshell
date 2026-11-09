@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"finallyshell/internal/monitor"
@@ -14,16 +15,24 @@ import (
 )
 
 // shellDirState follows the working directory of a session's shell, for
-// the file panel to go where the shell goes (see followShell).
+// the file panel to go where the shell goes (see followShell), and the
+// program in its foreground, for the tab to show the coding agent that
+// runs there (agenticon.go).
 type shellDirState struct {
 	// dir is the shell's directory as last read, first as the shell
 	// starts: "" before that. The panel moves when a command changes it,
 	// so a command that leaves it, as ls, keeps the folder the user
 	// browsed.
 	dir string
-	// wake asks the connection's follower to read the directory, after
-	// a command: nil while none runs.
+	// wake asks the connection's follower to read the directory, and the
+	// foreground program, after a command: nil while none runs.
 	wake chan struct{}
+	// agents is what the follower shares with the UI thread of the
+	// foreground program: nil while none runs.
+	agents *agentWatch
+	// agent is the coding agent in the shell's foreground, as last read:
+	// nil for none.
+	agent *monitor.Agent
 }
 
 // shellDirReads are how long the follower waits after a command before
@@ -34,33 +43,81 @@ var shellDirReads = []time.Duration{250 * time.Millisecond, 1250 * time.Millisec
 // shellDirTimeout is how long a read of the server waits for its answer.
 const shellDirTimeout = 10 * time.Second
 
-// readShellDir reads the shell's directory on the server; tests stand in
-// for it.
-var readShellDir = monitor.ShellDir
+// readShellState reads the shell's directory and foreground program on
+// the server; tests stand in for it.
+var readShellState = monitor.ShellState
 
 // startShellDir starts following the directory of the shell term shows on
-// client, until ctx ends. A shell that reports its directory (OSC 7)
-// tells it; else, when probe allows exec channels, the server's /proc
-// does (monitor.ShellDir). Runs on the UI thread.
+// client, and the program in its foreground, until ctx ends. A shell that
+// reports its directory (OSC 7) tells it; else, when probe allows exec
+// channels, the server's /proc does (monitor.ShellState), which also
+// tells the program, while the tabs show agents. Runs on the UI thread.
+//
+// One goroutine reads, one read at a time, so a tab never has more than
+// one in flight: after a command (wake), and after a key that can end or
+// stop a program (agentWatch.wake), it reads as shellDirReads says, and,
+// while the tab shows an agent, every agentPoll, so that the agent goes
+// when it ends by itself.
 func (a *App) startShellDir(ctx context.Context, s *Session, client *ssh.Client, term *terminal.Terminal, probe bool) {
 	wake := make(chan struct{}, 1)
-	s.shell = shellDirState{wake: wake}
-	delays, readServer := shellDirReads, readShellDir // as tests set them now
-	read := func(baseline bool) {
-		d := term.Dir()
-		if d == "" && probe {
+	w := &agentWatch{wake: make(chan struct{}, 1)}
+	w.on.Store(!a.settings.NoAgentIcons)
+	s.shell = shellDirState{wake: wake, agents: w}
+	delays, readServer, poll := shellDirReads, readShellState, agentPoll // as tests set them now
+	// sent is the agent the follower last sent the UI thread, which the
+	// tab shows once it has taken it, and sentTurn the setting's turn
+	// then (agentWatch.turns): only the goroutine uses them.
+	var sent *monitor.Agent
+	sentTurn := w.turns.Load()
+	// read reads the directory, when dir, and the foreground program,
+	// when the tabs show agents, and reports whether the tab shows one
+	// after it. A read that fails, as one that times out, tells nothing:
+	// the tab keeps what it shows, and keeps reading while that is an
+	// agent.
+	read := func(dir, baseline bool) (agent bool) {
+		turn := w.turns.Load() // before on: a turn read is never newer
+		agents := probe && w.on.Load()
+		d := ""
+		if dir {
+			d = term.Dir()
+		}
+		serverDir := dir && d == "" && probe
+		var sh monitor.Shell
+		var err error
+		if serverDir || agents {
 			rctx, cancel := context.WithTimeout(ctx, shellDirTimeout)
-			d, _ = readServer(rctx, client)
+			sh, err = readServer(rctx, client)
 			cancel()
 		}
-		if d == "" || ctx.Err() != nil {
-			return
+		if serverDir {
+			d = sh.Dir
+		}
+		ag := sent
+		if agents && err == nil {
+			ag = sh.Agent()
+		}
+		newDir := dir && d != ""
+		// Only a change redraws: one from what was sent, though the UI
+		// thread may not have taken it yet, or since the setting changed.
+		newAgent := agents && err == nil && (ag != sent || turn != sentTurn)
+		if ctx.Err() != nil || !newDir && !newAgent {
+			return agents && ag != nil
+		}
+		if newAgent {
+			sent, sentTurn = ag, turn
 		}
 		a.post(func() {
-			if ctx.Err() == nil && s.shell.wake == wake {
+			if ctx.Err() != nil || s.shell.wake != wake {
+				return
+			}
+			if newDir {
 				a.shellDirRead(s, d, baseline)
 			}
+			if newAgent {
+				a.shellAgentRead(s, ag)
+			}
 		})
+		return agents && ag != nil
 	}
 	// The first reads, as the shell starts, are where it is before any
 	// command, from which a command that keeps it is told apart: without
@@ -68,30 +125,62 @@ func (a *App) startShellDir(ctx context.Context, s *Session, client *ssh.Client,
 	// the panel from a folder the user browsed to. They don't move the
 	// panel, which the user may be browsing already.
 	wake <- struct{}{}
+	shellFollowers.Add(1) // here, so that it counts from the start
 	go func() {
-		baseline := true
+		defer shellFollowers.Add(-1)
+		baseline, agent := true, false
 		for {
+			// While the tab shows an agent, it reads again now and then.
+			var tick *time.Timer
+			var ticked <-chan time.Time
+			if agent && w.on.Load() {
+				tick = time.NewTimer(poll)
+				ticked = tick.C
+			}
+			dir, polled := true, false
 			select {
 			case <-ctx.Done():
-				return
 			case <-wake:
+			case <-w.wake:
+				dir = false // the agent alone: the directory follows commands
+			case <-ticked:
+				polled = true
+			}
+			if tick != nil {
+				tick.Stop()
+			}
+			switch {
+			case ctx.Err() != nil:
+				return
+			case polled:
+				agent = read(false, false)
+				continue
 			}
 			for i := 0; i < len(delays); {
 				select {
 				case <-ctx.Done():
 					return
 				case <-wake: // a command: wait for it from the start
-					i, baseline = 0, false
+					i, baseline, dir = 0, false, true
+					continue
+				case <-w.wake:
+					i = 0
 					continue
 				case <-time.After(delays[i]):
 				}
-				read(baseline)
+				agent = read(dir, baseline)
 				i++
 			}
-			baseline = false
+			if dir {
+				baseline = false
+			}
 		}
 	}()
 }
+
+// shellFollowers counts the followers that run, for the tests to see
+// that they end with their connection.
+var shellFollowers atomic.Int64
 
 // shellCommandSent tells s's follower that a command may have changed the
 // shell's directory: Enter was pressed in the terminal, or the command
