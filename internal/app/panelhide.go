@@ -14,6 +14,10 @@ import (
 // button at the right end of the row, the row's context menu and the
 // shortcut (scBottomPanel), which also collapse it.
 //
+// On the right of the terminal (rightcolumn.go), hiding the panel takes
+// its column away, and a strip at the terminal's right edge keeps the
+// button that shows it.
+//
 // The state is the settings' BottomPanelHidden, saved with the pane
 // sizes. A panel row (paneltab.go) is the panel itself and ignores it, as
 // full screen, which shows the terminal alone, does.
@@ -72,12 +76,17 @@ func (a *App) panelTabRow(c *ui.Context, tabs []bottomTab, tab *int, collapsed b
 		for i, t := range tabs {
 			labels[i] = t.label
 		}
-		if collapsed {
-			a.collapsedTabs(c, labels, tab)
-		} else {
-			ui.Tabs(c, tab, labels...)
-		}
-		ui.Spacer(c)
+		// The tabs scroll sideways where they do not fit, as in the
+		// right column, so that the buttons stay in view; the wheel
+		// scrolls them too (tabsWheel).
+		ui.ScrollHorizontal(c).Grow(1).MinWidth(0).Scrollbars(false).
+			TrackScroll(&a.panelTabsScroll).HandleInput(a.tabsWheel).Children(func() {
+			if collapsed {
+				a.collapsedTabs(c, labels, tab)
+			} else {
+				ui.Tabs(c, tab, labels...)
+			}
+		})
 		if underTerminal {
 			a.bottomPanelButton(c)
 		}
@@ -112,11 +121,16 @@ func (a *App) collapsedTabs(c *ui.Context, labels []string, tab *int) {
 }
 
 // bottomPanelButton is the button that collapses the bottom panel, a
-// chevron down, or opens it, a chevron up.
+// chevron down, or opens it, a chevron up; on the right, the chevrons
+// point right and left.
 func (a *App) bottomPanelButton(c *ui.Context) {
-	icon, label := "chevron-down", locales.HidePanel()
+	hide, show := "chevron-down", "chevron-up"
+	if a.panelOnRight() {
+		hide, show = "chevron-right", "chevron-left"
+	}
+	icon, label := hide, locales.HidePanel()
 	if a.bottomHidden {
-		icon, label = "chevron-up", locales.ShowPanel()
+		icon, label = show, locales.ShowPanel()
 	}
 	if widgets.IconButton(c, icon, label).Clicked() {
 		a.toggleBottomPanel()
@@ -133,4 +147,21 @@ func (a *App) bottomPanelMenu(m *ui.Menu) {
 	if m.Item(label).Chosen() {
 		a.toggleBottomPanel()
 	}
+	m.Separator()
+	if m.Item(a.movePanelLabel()).Chosen() {
+		a.setPanelOnRight(!a.panelOnRight())
+	}
+}
+
+// tabsWheel has the vertical wheel, or a vertical swipe of a touchpad,
+// over the panel's tabs scroll them sideways while they do not fit: down
+// toward the last tab. Sideways scrolling, and any while they fit, goes on
+// to the container as it would without it.
+func (a *App) tabsWheel(ev ui.InputEvent) bool {
+	s := &a.panelTabsScroll
+	if ev.Kind != ui.InputScroll || ev.DX != 0 || ev.DY == 0 || s.MaxX <= 0 || ev.Mods&ui.Ctrl != 0 {
+		return false
+	}
+	s.X = min(max(s.X+ev.DY, 0), s.MaxX)
+	return true
 }
