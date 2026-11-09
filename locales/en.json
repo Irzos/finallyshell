@@ -1425,6 +1425,7 @@
   "quickNewGroup": "New group",
   "quickGroupName": "Group name",
   "quickSearch": "Search commands",
+  "quickSearchShort": "Search",
   "quickLines": "{count, plural, one {# line} other {# lines}}",
   "@quickLines": {
     "placeholders": {
@@ -1486,6 +1487,30 @@
   },
   "quickLoadFailed": "quickcommands.json could not be read ({error}). Changes are not saved, so that the file is not replaced.",
   "@quickLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdEditor": "Command editor",
+  "cmdEditorSaveAs": "Save as command",
+  "cmdEditorClear": "Clear",
+  "cmdEditorOptions": "Options",
+  "cmdEditorOptionsLabel": "Command editor options",
+  "cmdEditorClearAfter": "Clear after sending",
+  "cmdEditorSendSelection": "Send selection",
+  "cmdEditorSendTip": "Send ({key})",
+  "@cmdEditorSendTip": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdEditorPlaceholder": "Commands to send, one per line",
+  "cmdEditorLoadFailed": "commandeditor.txt could not be read ({error}). The editor's text is not saved, so that the file is not replaced.",
+  "@cmdEditorLoadFailed": {
     "placeholders": {
       "error": {
         "type": "String"
