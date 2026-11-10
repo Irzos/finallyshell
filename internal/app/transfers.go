@@ -390,6 +390,9 @@ func (a *App) clearFinished() {
 	a.transfers.jobs = slices.DeleteFunc(a.transfers.jobs, (*transferJob).finished)
 }
 
+// transferPanel is the Transfers tab: the transfers of every session,
+// whichever tab is shown, a local terminal's too. Each row acts on its
+// own transfer's session (transferRow), never on the tab shown.
 func (a *App) transferPanel(c *ui.Context) {
 	q := &a.transfers
 	ui.Column(c).Grow(1).Children(func() {
