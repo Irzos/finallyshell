@@ -31,6 +31,9 @@ If you have used FinalShell, you already know your way around: server stats at t
 
 It is a native app written in Go with the [MyGo](https://github.com/egoist/mygo) UI toolkit, so there's no Java runtime to install. The terminal is libghostty-vt, the terminal engine of [Ghostty](https://ghostty.org). Passwords go to the system's keychain, never to a file.
 
+> [!IMPORTANT]
+> The project's only official places are this repository and its site, [tooonychen.github.io/finallyshell](https://tooonychen.github.io/finallyshell/), and [Releases](https://github.com/TooonyChen/finallyshell/releases) here is the only official download. Any other site that offers downloads under the Finallyshell name is not affiliated with this project.
+
 ## Install
 
 Download the latest build from [Releases](https://github.com/TooonyChen/finallyshell/releases/latest):
