@@ -357,15 +357,13 @@ func (r *archiveGzipReader) Read(p []byte) (int, error) {
 			return 0, err
 		}
 		if next[0] == 0 {
-			for {
-				b, err := r.buf.ReadByte()
-				if err != nil {
-					return 0, err
-				}
+			b, err := r.buf.ReadByte()
+			for ; err == nil; b, err = r.buf.ReadByte() {
 				if b != 0 {
 					return 0, gzip.ErrHeader
 				}
 			}
+			return 0, err
 		}
 		if err := r.member.Reset(r.buf); err != nil {
 			return 0, err
@@ -797,7 +795,7 @@ func dirArg(p string) string {
 // COPYFILE_DISABLE keeps macOS tar from adding AppleDouble entries.
 func downloadScript(dir string, names []string) string {
 	var b strings.Builder
-	b.WriteString("cd " + dirArg(dir) + " && exec env COPYFILE_DISABLE=1 tar -czf - --")
+	b.WriteString("cd " + dirArg(dir) + " && COPYFILE_DISABLE=1 exec tar -czf - --")
 	for _, n := range names {
 		b.WriteString(" " + ShellQuote(n))
 	}

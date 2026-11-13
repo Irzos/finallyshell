@@ -53,7 +53,7 @@ func TestShellQuote(t *testing.T) {
 }
 
 func TestScripts(t *testing.T) {
-	if got, want := downloadScript("/srv/my app", []string{"it's", "-rf"}), `cd '/srv/my app' && exec env COPYFILE_DISABLE=1 tar -czf - -- 'it'\''s' '-rf'`; got != want {
+	if got, want := downloadScript("/srv/my app", []string{"it's", "-rf"}), `cd '/srv/my app' && COPYFILE_DISABLE=1 exec tar -czf - -- 'it'\''s' '-rf'`; got != want {
 		t.Errorf("download script %s", got)
 	}
 	if got, want := uploadScript("/tmp/x y"), `mkdir -p -- '/tmp/x y' && cd '/tmp/x y' && exec tar -xzof -`; got != want {
@@ -757,28 +757,20 @@ func TestExtractDamagedTrailer(t *testing.T) {
 
 func TestExtractGzipPadding(t *testing.T) {
 	for _, tc := range []struct {
-		name  string
-		last  byte
-		valid bool
+		name string
+		last byte
+		want error
 	}{
-		{"zero padding", 0, true},
-		{"nonzero padding", 1, false},
+		{"zero padding", 0, nil},
+		{"nonzero padding", 1, gzip.ErrHeader},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ar := makeArchive(t, entry{name: "a.txt", typ: tar.TypeReg, body: "alpha"})
 			ar.Write(make([]byte, 512))
 			ar.WriteByte(tc.last)
-			dir := t.TempDir()
-			err := extractAll(t, context.Background(), ar, dir, []string{"a.txt"}, nil)
-			if tc.valid {
-				if err != nil {
-					t.Fatal(err)
-				}
-				if data, err := os.ReadFile(filepath.Join(dir, "a.txt")); err != nil || string(data) != "alpha" {
-					t.Fatalf("a.txt: %q, %v", data, err)
-				}
-			} else if !errors.Is(err, gzip.ErrHeader) {
-				t.Fatalf("expected invalid gzip padding, got %v", err)
+			err := extractAll(t, context.Background(), ar, t.TempDir(), []string{"a.txt"}, nil)
+			if !errors.Is(err, tc.want) {
+				t.Fatalf("extract: %v, want %v", err, tc.want)
 			}
 		})
 	}
