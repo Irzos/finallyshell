@@ -1453,6 +1453,11 @@ chosen in the table. When the current folder, or one it is in, is
 renamed, the panel follows it to its new path; when it is deleted, the
 panel goes to the folder it was in.
 
+Drag a remote file or folder onto a folder in the file table or folder
+tree to move it on the server. Dragging a selected row moves the other
+selected items with it. If a name is already taken in the destination,
+the move stops at that item and shows an error.
+
 ### Upload and download
 
 Upload: drag files or folders from Explorer or Finder onto the file table

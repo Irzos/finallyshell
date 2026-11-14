@@ -7394,6 +7394,18 @@ func (msgs Messages) FileNameTaken(name string) string {
 	return Catalog.Format(msgs.locale, "fileNameTaken", map[string]any{"name": name})
 }
 
+// CannotMoveFile says "Cannot move “{name}” to {dir}: {error}"
+// in the language the app shows.
+func CannotMoveFile(name string, dir string, error string) string {
+	return In(i18n.Locale()).CannotMoveFile(name, dir, error)
+}
+
+// CannotMoveFile says "Cannot move “{name}” to {dir}: {error}"
+// in the language of msgs.
+func (msgs Messages) CannotMoveFile(name string, dir string, error string) string {
+	return Catalog.Format(msgs.locale, "cannotMoveFile", map[string]any{"name": name, "dir": dir, "error": error})
+}
+
 // OptionsSync says "Sync"
 // in the language the app shows.
 func OptionsSync() string { return In(i18n.Locale()).OptionsSync() }

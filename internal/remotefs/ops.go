@@ -47,9 +47,18 @@ func free(c *sftp.Client, dir, name string) error {
 // SFTP rename of OpenSSH refuses to, but other servers may not, so it
 // looks first.
 func Rename(c *sftp.Client, p, name string) (string, error) {
-	dir := path.Dir(p)
+	return renameTo(c, p, path.Dir(p), name)
+}
+
+// Move puts the entry at p in dir, keeping its name.
+func Move(c *sftp.Client, p, dir string) error {
+	_, err := renameTo(c, p, dir, path.Base(p))
+	return err
+}
+
+func renameTo(c *sftp.Client, p, dir, name string) (string, error) {
 	np := path.Join(dir, name)
-	if name == path.Base(p) {
+	if np == path.Clean(p) && name == path.Base(p) {
 		return np, nil
 	}
 	if err := free(c, dir, name); err != nil {

@@ -171,6 +171,33 @@ func within(p, dir string) bool {
 	return p == dir || strings.HasPrefix(p, strings.TrimSuffix(dir, "/")+"/")
 }
 
+// moveTree moves the tree's open folders from one path to another, or
+// forgets them after deletion when to is empty.
+func (f *fileState) moveTree(from, to string) {
+	for k := range f.subdirs {
+		if within(k, from) {
+			delete(f.subdirs, k)
+		}
+	}
+	for k := range f.treeBusy {
+		if within(k, from) {
+			delete(f.treeBusy, k)
+		}
+	}
+	var open []string
+	for k := range f.tree.Open.All() {
+		if within(k, from) {
+			open = append(open, k)
+		}
+	}
+	for _, k := range open {
+		f.tree.Open.Remove(k)
+		if to != "" {
+			f.tree.Open.Add(to + strings.TrimPrefix(k, from))
+		}
+	}
+}
+
 // filesChanged shows the panel of d's session as d left the server: the
 // folder it happened in read again, and the tree and the current folder
 // moved off what was renamed or deleted. made is a rename's or a new
@@ -180,34 +207,13 @@ func (a *App) filesChanged(d *fileDialog, made string, gone []string, err error)
 	s := d.sess
 	f := &s.files
 	cwd := f.cwd
-	// moved moves the tree's folders under from to to, or forgets them
-	// for "".
-	moved := func(from, to string) {
-		for k := range f.subdirs {
-			if within(k, from) {
-				delete(f.subdirs, k)
-			}
-		}
-		var open []string
-		for k := range f.tree.Open.All() {
-			if within(k, from) {
-				open = append(open, k)
-			}
-		}
-		for _, k := range open {
-			f.tree.Open.Remove(k)
-			if to != "" {
-				f.tree.Open.Add(to + strings.TrimPrefix(k, from))
-			}
-		}
-	}
 	switch d.op {
 	case opRename:
 		if err != nil {
 			break
 		}
 		old := path.Join(d.dir, d.old)
-		moved(old, made)
+		f.moveTree(old, made)
 		if within(cwd, old) {
 			cwd = made + strings.TrimPrefix(cwd, old)
 		} else if cwd == d.dir {
@@ -219,7 +225,7 @@ func (a *App) filesChanged(d *fileDialog, made string, gone []string, err error)
 		}
 	case opDelete:
 		for _, p := range gone {
-			moved(p, "")
+			f.moveTree(p, "")
 			if within(cwd, p) {
 				cwd = d.dir
 			}

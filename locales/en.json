@@ -1225,6 +1225,7 @@
       }
     }
   },
+  "cannotMoveFile": "Cannot move “{name}” to {dir}: {error}",
   "optionsSync": "Sync",
   "syncIntro": "Keep connections and settings the same on your computers, through storage you already have. Everything is encrypted on this computer with your sync password before it leaves; Finallyshell runs no server and sees nothing.",
   "syncService": "Sync with",

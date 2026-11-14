@@ -15,14 +15,17 @@ import (
 
 // fileState is the file panel of a session.
 type fileState struct {
-	cwd      string
-	pathEdit string
-	entries  []remotefs.Entry
-	loading  bool
-	err      error
-	table    ui.ListState
-	chosen   ui.Selection[string] // names in cwd
-	row      int
+	cwd        string
+	pathEdit   string
+	entries    []remotefs.Entry
+	loading    bool
+	listingDir string
+	listingID  uint64
+	err        error
+	table      ui.ListState
+	chosen     ui.Selection[string] // names in cwd
+	row        int
+	moving     bool
 
 	// reveal is a name to choose in the table once cwd is read again: a
 	// file just renamed or made.
@@ -31,7 +34,8 @@ type fileState struct {
 	tree     ui.OutlineState[string]
 	treeRow  int
 	subdirs  map[string][]string // the directories in each loaded directory
-	treeBusy map[string]bool
+	treeBusy map[string]uint64
+	treeRead uint64
 }
 
 type sftpError struct{ err error }
@@ -57,7 +61,7 @@ func fileErrorText(err error) string {
 
 func (f *fileState) init() {
 	f.subdirs = map[string][]string{}
-	f.treeBusy = map[string]bool{}
+	f.treeBusy = map[string]uint64{}
 	f.row = -1
 	f.treeRow = -1
 	f.tree.Open.Add("/")
@@ -86,7 +90,9 @@ func (a *App) listDir(s *Session, dir string, quiet bool) {
 	}
 	dir = path.Clean(dir)
 	f := &s.files
-	f.loading = true
+	f.loading, f.listingDir = true, dir
+	f.listingID++
+	id := f.listingID
 	if !quiet {
 		f.err = nil
 		f.pathEdit = dir
@@ -95,6 +101,9 @@ func (a *App) listDir(s *Session, dir string, quiet bool) {
 	go func() {
 		entries, err := remotefs.ReadDir(sc, dir)
 		a.post(func() {
+			if id != f.listingID || sc != s.sftp {
+				return
+			}
 			f.loading = false
 			if err != nil {
 				if !quiet {
@@ -145,15 +154,23 @@ func (a *App) refreshIfShowing(s *Session, dir string) {
 // loadSubdirs reads the directories in dir, for the tree.
 func (a *App) loadSubdirs(s *Session, dir string) {
 	f := &s.files
-	if s.sftp == nil || f.treeBusy[dir] {
+	if s.sftp == nil || f.treeBusy[dir] != 0 {
 		return
 	}
-	f.treeBusy[dir] = true
+	f.treeRead++
+	read := f.treeRead
+	f.treeBusy[dir] = read
 	sc := s.sftp
 	go func() {
 		entries, err := remotefs.ReadDir(sc, dir)
 		a.post(func() {
+			if f.treeBusy[dir] != read {
+				return
+			}
 			delete(f.treeBusy, dir)
+			if sc != s.sftp {
+				return
+			}
 			if err != nil {
 				f.subdirs[dir] = []string{}
 				return
@@ -161,6 +178,11 @@ func (a *App) loadSubdirs(s *Session, dir string) {
 			f.subdirs[dir] = dirNames(dir, entries)
 		})
 	}()
+}
+
+func (f *fileState) forgetSubdirs(dir string) {
+	delete(f.subdirs, dir)
+	delete(f.treeBusy, dir)
 }
 
 func dirNames(dir string, entries []remotefs.Entry) []string {
@@ -288,6 +310,7 @@ func (a *App) dirTree(c *ui.Context, s *Session) {
 	}, func(dir string) {
 		row := ui.Row(c).Gap(5).Grow(1).Radius(4)
 		a.dropZone(row, s, dir)
+		a.fileMoveDropZone(row, s, dir)
 		row.ContextMenu(func(m *ui.Menu) { a.treeMenu(c, m, s, dir) })
 		row.Children(func() {
 			name := path.Base(dir)
@@ -309,17 +332,32 @@ func (a *App) dirTree(c *ui.Context, s *Session) {
 
 func (a *App) fileTable(c *ui.Context, s *Session) {
 	f := &s.files
-	entries := f.entries
+	dir, entries := f.cwd, f.entries
 	f.table.Selected = &f.row
 	f.table.Selection = &f.chosen
 	f.table.Key = func(i int) any { return entries[i].Name }
 	f.table.Label = func(i int) string { return entries[i].Name }
+	f.table.DragRows = func(rows []int) any {
+		if s.sftp == nil || dir == "" || f.moving {
+			return nil
+		}
+		names := make([]string, 0, len(rows))
+		for _, i := range rows {
+			names = append(names, entries[i].Name)
+		}
+		return fileDrag{client: s.sftp, dir: dir, names: names}
+	}
 	zone := ui.Column(c).Fill()
 	a.dropZone(zone, s, f.cwd)
 	over := zone.FileDragOver() && f.cwd != ""
 	zone.Children(func() {
 		t := ui.Table(c, &f.table, fileColumns(), len(entries), func(row, col int) {
 			e := entries[row]
+			if e.IsDir() {
+				padY, padX := theme.Space(1.5), theme.Space(2.5)
+				target := ui.Box(c).Absolute().Top(-padY).Bottom(-padY).Left(-padX).Right(-padX).ZIndex(1)
+				a.fileMoveDropZone(target, s, path.Join(dir, e.Name))
+			}
 			switch col {
 			case 0:
 				// A chosen row keeps the table's text color, which shows on

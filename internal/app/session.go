@@ -365,6 +365,7 @@ func (s *Session) disconnect() {
 	if s.sftp != nil {
 		s.sftp.Close()
 		s.sftp = nil
+		s.files.loading = false
 	}
 	for _, p := range s.panes.panes() {
 		p.end()
