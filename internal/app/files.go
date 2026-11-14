@@ -354,6 +354,18 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 				ui.Text(c, fmt.Sprintf("%d/%d", e.UID, e.GID))
 			}
 		}).Grow(1)
+		// Rows and headers take their own presses. The table itself
+		// receives the release for a press on its empty background.
+		bounds := t.Bounds()
+		t.HandleInput(func(ev ui.InputEvent) bool {
+			if ev.Kind == ui.InputPointerUp && ev.Button == 0 && !ev.Canceled &&
+				ev.X >= 0 && ev.X < bounds.W && ev.Y >= 0 && ev.Y < bounds.H {
+				f.chosen.Clear()
+				f.row = -1
+				return true
+			}
+			return false
+		})
 		// A double click or Enter opens a folder, or a file in the editor.
 		if t.Submitted() && f.row >= 0 && f.row < len(entries) {
 			if e := entries[f.row]; e.IsDir() {

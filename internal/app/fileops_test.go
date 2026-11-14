@@ -59,6 +59,37 @@ func (f *editorFixture) showInTree(t *testing.T, p string) {
 	t.Fatalf("%s is not in the tree", p)
 }
 
+func TestClearFileSelection(t *testing.T) {
+	f := newEditorFixture(t)
+	tt, files := f.tt, &f.s.files
+	tt.ClickAt(rowCenter(t, tt, "app.yaml"))
+	x, y := rowCenter(t, tt, "deploy.sh")
+	tt.ClickAtWith(ui.Cmd, x, y)
+	tt.ClickAt(rowCenter(t, tt, locales.ColName()))
+	if got := files.chosenNames(); !slices.Equal(got, []string{"app.yaml", "deploy.sh"}) {
+		t.Fatalf("selection after clicking the header = %q", got)
+	}
+
+	x, y = rowCenter(t, tt, "legacy.ini")
+	tt.ClickAt(x, y+30)
+	if got := files.chosenNames(); len(got) != 0 || files.row != -1 {
+		t.Fatalf("selection after clicking below the rows = %q, cursor = %d", got, files.row)
+	}
+	tt.ClickAt(rowCenter(t, tt, "app.yaml"))
+	if got := files.chosenNames(); !slices.Equal(got, []string{"app.yaml"}) {
+		t.Errorf("selection after clicking a row = %q", got)
+	}
+	if os.Getenv("SHOT_DIR") != "" {
+		for _, lang := range []string{"en", "zh-Hans"} {
+			f.p.SetLocale(lang)
+			tt.Frame()
+			tt.ClickAt(rowCenter(t, tt, "app.yaml"))
+			tt.ClickAt(x, y+30)
+			saveShot(t, tt, "file-selection-cleared-"+lang+".png")
+		}
+	}
+}
+
 // The table's menu, F2 and Delete rename, create and delete files, and
 // the table chooses what was renamed or made.
 func TestFileOpsInTable(t *testing.T) {

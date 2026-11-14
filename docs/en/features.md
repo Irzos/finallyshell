@@ -1317,7 +1317,8 @@ In `settings.json` these are `termFontFamily`, `termFontSize`,
 
 The "Files" tab at the bottom right browses the server over SFTP: a folder
 tree on the left, a file table on the right (with multiple selection), and
-a path bar where a path can be typed directly.
+a path bar where a path can be typed directly. Click the empty area below
+the file rows to clear the selection.
 
 ### Following the terminal's folder
 
