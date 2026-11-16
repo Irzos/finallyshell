@@ -122,7 +122,7 @@ func TestGeneralOptionsPersist(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	want := config.Settings{NoAutoSelectTab: true, MinimizeToTray: true, NoConfirmClose: true, NoConfirmCloseSession: true}
+	want := config.Settings{NoAutoSelectTab: true, MinimizeToTray: true, NoConfirmClose: true, ConfirmCloseSession: true}
 	if a.settings != want || config.LoadSettings() != want {
 		t.Fatalf("settings %+v, saved %+v", a.settings, config.LoadSettings())
 	}

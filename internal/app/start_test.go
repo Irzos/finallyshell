@@ -415,7 +415,6 @@ func hostsOf(rows []*Session) []*config.Host {
 
 func TestNewTabRows(t *testing.T) {
 	a, _, tt, _ := startApp(t)
-	a.settings.NoConfirmCloseSession = true
 	s := demoSession(a, "web-1", "203.0.113.10") // a session after the new tab
 
 	// The "+" button, after the options and local terminal buttons, adds

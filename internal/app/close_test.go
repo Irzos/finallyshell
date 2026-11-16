@@ -118,7 +118,6 @@ func TestCloseSessionKeepsOneSelected(t *testing.T) {
 			}
 			t.Run(how+"/"+k.name, func(t *testing.T) {
 				a, tt, shows := closeApp(t, k.selected)
-				a.settings.NoConfirmCloseSession = true
 				gone := a.sessions[k.close]
 				closeWith[how](t, a, tt, k.close)
 				tt.Frame()
@@ -161,12 +160,13 @@ func TestConfirmCloseSSHSession(t *testing.T) {
 			}
 			a.active = 0
 			a.settings.NoConfirmClose = true
+			a.settings.ConfirmCloseSession = true
 			tt := ui.NewTester(a.View, 1280, 820)
 			p.tt = tt
 			closeWith[how](t, a, tt, 0)
 			p.until(t, "the canceled close", func() bool { return !a.askingCloseSession })
 			if q := p.questions(); len(q) != 1 || q[0].Message != locales.ConfirmCloseSessionTitle(s.label()) ||
-				a.current() != s || s.term() == nil {
+				q[0].Detail != locales.ConfirmCloseSessionNote() || a.current() != s || s.term() == nil {
 				t.Fatalf("cancel left %d sessions with questions %+v", len(a.sessions), q)
 			}
 			p.answer = true

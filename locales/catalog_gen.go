@@ -4778,11 +4778,11 @@ func (msgs Messages) ConfirmCloseSessionTitle(name string) string {
 	return Catalog.Format(msgs.locale, "confirmCloseSessionTitle", map[string]any{"name": name})
 }
 
-// ConfirmCloseSessionNote says "This will end the SSH connection."
+// ConfirmCloseSessionNote says "This will end the SSH connection and cancel any active file transfers."
 // in the language the app shows.
 func ConfirmCloseSessionNote() string { return In(i18n.Locale()).ConfirmCloseSessionNote() }
 
-// ConfirmCloseSessionNote says "This will end the SSH connection."
+// ConfirmCloseSessionNote says "This will end the SSH connection and cancel any active file transfers."
 // in the language of msgs.
 func (msgs Messages) ConfirmCloseSessionNote() string {
 	return Catalog.Format(msgs.locale, "confirmCloseSessionNote", nil)

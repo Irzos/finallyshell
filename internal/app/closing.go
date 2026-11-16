@@ -16,7 +16,7 @@ type Confirmation struct {
 }
 
 func (a *App) requestCloseSession(s *Session) {
-	if a.settings.NoConfirmCloseSession || s.Host == nil || s.isLocal() ||
+	if !a.settings.ConfirmCloseSession || s.Host == nil || s.isLocal() ||
 		(s.status != statusConnected && s.status != statusConnecting) {
 		a.closeSession(s)
 		return

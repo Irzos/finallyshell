@@ -627,7 +627,7 @@
   "optionAgentIcons": "Show the coding agent running in each tab",
   "optionAgentIconsNote": "While Claude Code, Codex, Gemini CLI or another coding agent runs in a session's shell, its logo shows next to the tab's name. The app reads the server's /proc over an exec channel to tell, so it needs a Linux server whose host has the exec channel on.",
   "confirmCloseSessionTitle": "Close SSH session ‘{name}’?",
-  "confirmCloseSessionNote": "This will end the SSH connection.",
+  "confirmCloseSessionNote": "This will end the SSH connection and cancel any active file transfers.",
   "confirmQuitTitle": "Quit Finallyshell?",
   "confirmQuitBody": "{count, plural, one {# session is open. Quitting disconnects it.} other {# sessions are open. Quitting disconnects them.}}",
   "@confirmQuitBody": {
