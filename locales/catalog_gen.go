@@ -1022,6 +1022,26 @@ func (msgs Messages) KindExtFile(ext string) string {
 	return Catalog.Format(msgs.locale, "kindExtFile", map[string]any{"ext": ext})
 }
 
+// EditRemotePath says "Edit remote path"
+// in the language the app shows.
+func EditRemotePath() string { return In(i18n.Locale()).EditRemotePath() }
+
+// EditRemotePath says "Edit remote path"
+// in the language of msgs.
+func (msgs Messages) EditRemotePath() string {
+	return Catalog.Format(msgs.locale, "editRemotePath", nil)
+}
+
+// MoreParentFolders says "More parent folders"
+// in the language the app shows.
+func MoreParentFolders() string { return In(i18n.Locale()).MoreParentFolders() }
+
+// MoreParentFolders says "More parent folders"
+// in the language of msgs.
+func (msgs Messages) MoreParentFolders() string {
+	return Catalog.Format(msgs.locale, "moreParentFolders", nil)
+}
+
 // ParentFolder says "Parent folder"
 // in the language the app shows.
 func ParentFolder() string { return In(i18n.Locale()).ParentFolder() }

@@ -97,6 +97,8 @@
   "kindBrokenLink": "失效的链接",
   "kindFile": "文件",
   "kindExtFile": "{ext} 文件",
+  "editRemotePath": "编辑远程路径",
+  "moreParentFolders": "更多上级目录",
   "parentFolder": "上级目录",
   "refresh": "刷新",
   "homeFolder": "主目录",

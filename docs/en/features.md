@@ -1316,8 +1316,10 @@ In `settings.json` these are `termFontFamily`, `termFontSize`,
 ## File panel
 
 The "Files" tab at the bottom right browses the server over SFTP: a folder
-tree on the left, a file table on the right (with multiple selection), and
-a path bar where a path can be typed directly.
+tree on the left and a file table on the right (with multiple selection).
+Click a folder in the path bar to go straight to it. When space is tight,
+the ellipsis menu holds the earlier folders. Click the pencil to type or
+paste a path, then press Enter to open it or Escape to cancel.
 
 ### Following the terminal's folder
 

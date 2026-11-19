@@ -151,6 +151,8 @@
   "kindBrokenLink": "Broken link",
   "kindFile": "File",
   "kindExtFile": "{ext} file",
+  "editRemotePath": "Edit remote path",
+  "moreParentFolders": "More parent folders",
   "parentFolder": "Parent folder",
   "refresh": "Refresh",
   "homeFolder": "Home folder",
