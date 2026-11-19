@@ -161,6 +161,15 @@ func (a *App) retry(t *transferJob) {
 	if i < 0 || !a.canRetry(t) {
 		return
 	}
+	if t.clipboard != "" {
+		token, err := a.reserveFileClipboard()
+		if err != nil {
+			a.notify(locales.FileCopyFailed(err.Error()))
+			return
+		}
+		t.clipboard = token
+		a.notify(locales.FileCopyPreparing())
+	}
 	q.jobs = slices.Delete(q.jobs, i, i+1)
 	t.sftp, t.ssh = t.sess.sftp, t.sess.client
 	t.state, t.err, t.local, t.cancel, t.current = transferWaiting, nil, "", nil, ""

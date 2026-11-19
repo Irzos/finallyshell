@@ -1072,6 +1072,56 @@ func (msgs Messages) CopyPath() string {
 	return Catalog.Format(msgs.locale, "copyPath", nil)
 }
 
+// CopyToClipboard says "Copy to clipboard"
+// in the language the app shows.
+func CopyToClipboard() string { return In(i18n.Locale()).CopyToClipboard() }
+
+// CopyToClipboard says "Copy to clipboard"
+// in the language of msgs.
+func (msgs Messages) CopyToClipboard() string {
+	return Catalog.Format(msgs.locale, "copyToClipboard", nil)
+}
+
+// FileCopyPreparing says "Preparing files to paste. See progress in Transfers."
+// in the language the app shows.
+func FileCopyPreparing() string { return In(i18n.Locale()).FileCopyPreparing() }
+
+// FileCopyPreparing says "Preparing files to paste. See progress in Transfers."
+// in the language of msgs.
+func (msgs Messages) FileCopyPreparing() string {
+	return Catalog.Format(msgs.locale, "fileCopyPreparing", nil)
+}
+
+// FileCopyReady says "Files copied. Paste them in your file manager."
+// in the language the app shows.
+func FileCopyReady() string { return In(i18n.Locale()).FileCopyReady() }
+
+// FileCopyReady says "Files copied. Paste them in your file manager."
+// in the language of msgs.
+func (msgs Messages) FileCopyReady() string {
+	return Catalog.Format(msgs.locale, "fileCopyReady", nil)
+}
+
+// FileCopyFailed says "Could not copy files: {error}"
+// in the language the app shows.
+func FileCopyFailed(error string) string { return In(i18n.Locale()).FileCopyFailed(error) }
+
+// FileCopyFailed says "Could not copy files: {error}"
+// in the language of msgs.
+func (msgs Messages) FileCopyFailed(error string) string {
+	return Catalog.Format(msgs.locale, "fileCopyFailed", map[string]any{"error": error})
+}
+
+// FileCopyClipboardChanged says "The clipboard changed. Copy the files again to paste them."
+// in the language the app shows.
+func FileCopyClipboardChanged() string { return In(i18n.Locale()).FileCopyClipboardChanged() }
+
+// FileCopyClipboardChanged says "The clipboard changed. Copy the files again to paste them."
+// in the language of msgs.
+func (msgs Messages) FileCopyClipboardChanged() string {
+	return Catalog.Format(msgs.locale, "fileCopyClipboardChanged", nil)
+}
+
 // SftpUnavailable says "SFTP unavailable: {error}"
 // in the language the app shows.
 func SftpUnavailable(error string) string { return In(i18n.Locale()).SftpUnavailable(error) }

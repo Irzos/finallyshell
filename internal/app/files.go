@@ -371,6 +371,10 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 				a.upload(s, files, f.cwd)
 			}
 		}
+		if s.sftp != nil && f.cwd != "" && f.chosen.Len() > 0 &&
+			f.table.Shortcut(c, ui.Cmd, ui.KeyC) && !c.ShortcutRepeated() {
+			a.copyRemoteFiles(s, f.chosenNames())
+		}
 		// F2 renames the row chosen; Delete, or Cmd+Backspace as in
 		// Finder, deletes those chosen.
 		rename := f.table.Shortcut(c, 0, ui.KeyF2)
@@ -391,6 +395,9 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 				m.Separator()
 			}
 			a.downloadMenuItems(m, s, names)
+			if m.Item(locales.Copy()).Shortcut(ui.Cmd, ui.KeyC).Disabled(s.sftp == nil || f.cwd == "" || len(names) == 0).Chosen() {
+				a.copyRemoteFiles(s, names)
+			}
 			m.Separator()
 			a.uploadMenuItems(m, s, f.cwd)
 			m.Separator()
