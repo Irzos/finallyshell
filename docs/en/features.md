@@ -1456,9 +1456,11 @@ panel goes to the folder it was in.
 ### Upload and download
 
 Upload: drag files or folders from Explorer or Finder onto the file table
-(they go to the current folder) or onto a folder in the folder tree. The
-toolbar's upload button and the context menu can also choose files or a
-folder.
+(they go to the current folder) or onto a folder in the folder tree. To
+upload from the clipboard, copy files or folders in your system's file
+manager, click the remote file table, and press Cmd+V on macOS or Ctrl+V
+on Windows and Linux. The files go to the current remote folder. The
+toolbar's upload button and the context menu can also choose files or a folder.
 
 Download: select files or folders and click the download button. They are
 saved in the download folder, which is the system's Downloads folder

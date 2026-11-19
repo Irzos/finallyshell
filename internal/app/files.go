@@ -10,6 +10,7 @@ import (
 	"finallyshell/internal/widgets"
 	"finallyshell/locales"
 
+	"github.com/egoist/mygo/transfer"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -360,6 +361,14 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 				a.openDir(s, path.Join(f.cwd, e.Name))
 			} else if editable(e) {
 				a.openRemoteFile(s, path.Join(f.cwd, e.Name))
+			}
+		}
+		// Handle file paste only with the table's focus. The terminal and
+		// text fields keep their own paste behavior.
+		if s.sftp != nil && f.cwd != "" && f.table.Shortcut(c, ui.Cmd, ui.KeyV) && !c.ShortcutRepeated() {
+			data := c.Services().ReadClipboardData(transfer.FileList, transfer.URIList)
+			if files, err := data.Files(); err == nil && len(files) > 0 {
+				a.upload(s, files, f.cwd)
 			}
 		}
 		// F2 renames the row chosen; Delete, or Cmd+Backspace as in
