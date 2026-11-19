@@ -34,24 +34,27 @@ func (a *App) copyRemoteFiles(s *Session, names []string) {
 	if s.sftp == nil || s.files.cwd == "" || len(names) == 0 {
 		return
 	}
+	job := &transferJob{
+		sess: s, sftp: s.sftp, dir: download, src: names[0],
+		dstDir: filepath.Join(a.plat.TempDir(), "clipboard"), clipboard: true,
+	}
 	srcs := make([]string, len(names))
 	for i, name := range names {
 		if path.Base(name) != name || filepath.Base(name) != name || !filepath.IsLocal(name) || name == "." {
-			a.notify(locales.FileCopyFailed(locales.BadFileName()))
+			job.state, job.err = transferFailed, errors.New(locales.BadFileName())
+			a.enqueue(job)
 			return
 		}
 		srcs[i] = path.Join(s.files.cwd, name)
 	}
+	job.src, job.srcs = srcs[0], srcs
 	token, err := a.reserveFileClipboard()
 	if err != nil {
-		a.notify(locales.FileCopyFailed(err.Error()))
-		return
+		job.state, job.err = transferFailed, err
+	} else {
+		job.clipboardToken = token
 	}
-	a.enqueue(&transferJob{
-		sess: s, sftp: s.sftp, dir: download, src: srcs[0], srcs: srcs,
-		dstDir: filepath.Join(a.plat.TempDir(), "clipboard"), clipboard: token,
-	})
-	a.notify(locales.FileCopyPreparing())
+	a.enqueue(job)
 }
 
 // stageFileCopy downloads the whole selection before exposing any of it
@@ -107,12 +110,6 @@ func (a *App) finishFileCopy(ctx context.Context, t *transferJob, dir string, er
 	if err == nil {
 		err = a.publishFileCopy(t, dir)
 	}
-	switch {
-	case err == nil:
-		a.notify(locales.FileCopyReady())
-	case !remotefs.IsCanceled(err):
-		a.notify(locales.FileCopyFailed(transferErrorText(err)))
-	}
 	if err != nil && dir != "" {
 		go os.RemoveAll(dir)
 	}
@@ -129,7 +126,7 @@ func (a *App) publishFileCopy(t *transferJob, dir string) error {
 		return err
 	}
 	token, err := a.plat.ReadClipboardFormat(pendingFileCopy)
-	if err != nil || string(token) != t.clipboard {
+	if err != nil || string(token) != t.clipboardToken {
 		return errors.New(locales.FileCopyClipboardChanged())
 	}
 	return a.plat.WriteClipboardData(data)

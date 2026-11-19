@@ -43,6 +43,8 @@ type fakePlatform struct {
 	fakeAppearance
 	*fakeSecrets
 	fakeUpdates
+
+	clipboardWriteErr error
 }
 
 func newFakePlatform(t *testing.T) *fakePlatform {
@@ -61,6 +63,9 @@ func (p *fakePlatform) ReadClipboardFormat(format transfer.Format) ([]byte, erro
 	return p.tt.ClipboardData().Read(format)
 }
 func (p *fakePlatform) WriteClipboardData(data transfer.Data) error {
+	if p.clipboardWriteErr != nil {
+		return p.clipboardWriteErr
+	}
 	p.tt.SetClipboardData(data)
 	return nil
 }

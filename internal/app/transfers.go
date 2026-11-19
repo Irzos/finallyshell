@@ -51,7 +51,8 @@ type transferJob struct {
 	local  string // the local copy of a finished download
 	// A clipboard download stages all srcs in a private directory. The
 	// token lets it publish only while its copy request owns the clipboard.
-	clipboard string
+	clipboard      bool
+	clipboardToken string
 
 	// archive packs srcs, all in one folder, with tar on the server,
 	// over an exec channel of ssh (archive.go); src is the first.
@@ -290,7 +291,7 @@ func (a *App) run(t *transferJob) {
 	go func() {
 		local, skipped, err := a.transfer(ctx, t, report)
 		a.post(func() {
-			if t.clipboard != "" {
+			if t.clipboard {
 				err = a.finishFileCopy(ctx, t, local, err)
 			}
 			cancel()
@@ -320,7 +321,7 @@ func (a *App) run(t *transferJob) {
 // how far it is, and returns the local copy of a download, and the links
 // an archive download did not make.
 func (a *App) transfer(ctx context.Context, t *transferJob, report remotefs.ArchiveProgress) (string, remotefs.SkippedLinks, error) {
-	if t.clipboard != "" {
+	if t.clipboard {
 		dir, err := a.stageFileCopy(ctx, t, report)
 		return dir, remotefs.SkippedLinks{}, err
 	}
@@ -440,7 +441,7 @@ func (a *App) transferRow(c *ui.Context, t *transferJob) {
 			dirLabel = t.archiveLabel()
 		}
 		detail := dirLabel + " → " + dest
-		if t.clipboard != "" {
+		if t.clipboard {
 			detail = locales.CopyToClipboard()
 		}
 		ui.Icon(c, ic).FontSize(16).TextColor(theme.TextMuted)
@@ -488,7 +489,7 @@ func (a *App) transferRow(c *ui.Context, t *transferJob) {
 			if widgets.IconButton(c, "rotate-cw", locales.Retry()).Disabled(!ok).Clicked() && ok {
 				a.retry(t)
 			}
-		case t.state == transferDone && t.local != "" && t.clipboard == "":
+		case t.state == transferDone && t.local != "" && !t.clipboard:
 			if widgets.IconButton(c, "external-link", locales.OpenFile()).Clicked() {
 				a.openDownload(t)
 			}

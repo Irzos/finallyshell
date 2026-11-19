@@ -1474,9 +1474,10 @@ folder chooser.
 To paste remote files on your computer, select them in the file table
 and press Cmd+C on macOS or Ctrl+C on Windows and Linux, or choose Copy
 from the table's context menu. Finallyshell downloads the selection to
-its cache. You can follow the download or cancel it in Transfers. Wait
-for the copied message, then paste in the destination folder in your
-system's file manager. The file manager handles filename conflicts.
+its cache. The toolbar's Downloads queue and the Transfers tab show
+progress and let you cancel. Once the copy is marked Done, paste in
+the destination folder in your system's file manager. The file
+manager handles filename conflicts.
 Copying something else while the download runs keeps the newer clipboard
 contents. Cached copies older than a day are cleaned up on the first
 file copy after the app restarts.

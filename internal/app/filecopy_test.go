@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -66,6 +67,7 @@ func TestCopyRemoteFilesFocus(t *testing.T) {
 	if len(a.transfers.jobs) != 0 {
 		t.Fatal("key repeat queued a copy")
 	}
+	a.transfers.running = maxRunning
 	if runtime.GOOS == "darwin" {
 		tt.Command("copy")
 	} else {
@@ -74,12 +76,26 @@ func TestCopyRemoteFilesFocus(t *testing.T) {
 	if slices.Contains(tt.ClipboardData().Formats(), transfer.FileList) {
 		t.Fatal("incomplete files offered to the clipboard")
 	}
+	if a.transfers.popover.open || tt.HasText("Preparing files to paste") {
+		t.Fatal("copy opened a popover or showed a toast")
+	}
+	if err := tt.Click(locales.DownloadsButton()); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText(locales.CopyToClipboard()) || !tt.HasText(locales.TransferWaiting()) {
+		t.Fatalf("waiting copy not shown in Downloads: %v", tt.Texts())
+	}
+	a.transfers.running = 0
+	a.pump()
 	p.until(t, "file clipboard", func() bool {
 		return len(a.transfers.jobs) == 1 && a.transfers.jobs[0].finished()
 	})
 	job := a.transfers.jobs[0]
 	if job.state != transferDone {
 		t.Fatalf("copy state %d: %v", job.state, job.err)
+	}
+	if !tt.HasText(locales.CopyToClipboard()) || !tt.HasText(locales.TransferDone()) || tt.HasText("Files copied.") {
+		t.Fatalf("copy completion should appear only in Downloads: %v", tt.Texts())
 	}
 	files, err := tt.ClipboardData().Files()
 	want := []string{filepath.Join(job.local, "photos"), filepath.Join(job.local, report)}
@@ -103,6 +119,37 @@ func TestCopyRemoteFilesFocus(t *testing.T) {
 	}
 	if got, err := linux.Read(gnomeCopiedFiles); err != nil || string(got) != "copy\n"+strings.Join(uris, "\n") {
 		t.Fatalf("GNOME copy data %q: %v", got, err)
+	}
+}
+
+func TestCopyRemoteFilesShowsClipboardErrorsInDownloads(t *testing.T) {
+	a, p, s, tt, remote := fileCopyApp(t)
+	s.files.cwd = remote
+	if err := os.WriteFile(filepath.Join(remote, "notes.txt"), []byte("notes"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	failure := errors.New("clipboard busy")
+	p.clipboardWriteErr = failure
+	a.copyRemoteFiles(s, []string{"notes.txt"})
+	job := a.transfers.jobs[0]
+	if job.state != transferFailed || !errors.Is(job.err, failure) || !a.canRetry(job) {
+		t.Fatalf("failed copy: state %d, error %v", job.state, job.err)
+	}
+	tt.Frame()
+	if tt.HasText(failure.Error()) || a.transfers.popover.open {
+		t.Fatal("copy failure was shown outside the Downloads queue")
+	}
+	if err := tt.Click(locales.DownloadsButton()); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText(locales.CopyToClipboard()) || !tt.HasText(locales.TransferFailed(failure.Error())) {
+		t.Fatalf("failed copy not shown in Downloads: %v", tt.Texts())
+	}
+	p.clipboardWriteErr = nil
+	a.retry(job)
+	p.until(t, "successful retry", job.finished)
+	if job.state != transferDone || !tt.HasText(locales.TransferDone()) {
+		t.Fatalf("retry state %d: %v", job.state, job.err)
 	}
 }
 
