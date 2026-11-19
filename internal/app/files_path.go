@@ -131,12 +131,12 @@ func (a *App) fileBreadcrumbs(c *ui.Context, s *Session) {
 				return ui.Text(c, item.name).FontSize(fontSize).SingleLine().Ellipsis("…").MinWidth(0).Shrink(1)
 			}
 			if item.dir == s.files.cwd {
-				ui.Row(c.Key(item.dir)).Width(item.width).MinWidth(0).Shrink(1).PaddingX(pad).Tooltip(item.dir).
+				ui.Row(c.Key(item.dir)).Width(item.width).MinWidth(0).Shrink(1).PaddingX(pad).
 					Children(func() { label().TextColor(theme.Text) })
 				continue
 			}
 			b := ui.ButtonBase(c.Key(item.dir)).Size(item.width, 24).Shrink(0).PaddingX(pad).Center().Radius(4).
-				Label(item.dir).Tooltip(item.dir)
+				Label(item.dir)
 			if b.Hovered() {
 				b.Background(theme.Text.Alpha(0.07))
 			}
