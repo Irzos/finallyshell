@@ -59,7 +59,7 @@ func (a *App) filePathBar(c *ui.Context, s *Session) {
 func (a *App) fileBreadcrumbs(c *ui.Context, s *Session) {
 	const (
 		fontSize = 12.5
-		pad      = 7
+		pad      = 3
 		maxWidth = 156
 		chevron  = 12
 		overflow = 27
