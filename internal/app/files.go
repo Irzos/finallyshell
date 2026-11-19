@@ -96,6 +96,9 @@ func (a *App) listDir(s *Session, dir string, quiet bool) {
 	f.loading = true
 	if !quiet {
 		f.err = nil
+		if !a.settings.FilePathBreadcrumbs {
+			f.pathEdit = dir
+		}
 	}
 	sc := s.sftp
 	go func() {
@@ -108,6 +111,9 @@ func (a *App) listDir(s *Session, dir string, quiet bool) {
 			if err != nil {
 				if !quiet {
 					f.err = &dirError{dir, err}
+					if !a.settings.FilePathBreadcrumbs {
+						f.pathEdit = f.cwd
+					}
 				}
 				return
 			}
@@ -222,7 +228,11 @@ func (a *App) filePanel(c *ui.Context) {
 	}
 	f := &s.files
 	ui.Column(c.Key(s.ID)).Grow(1).Children(func() {
-		ui.Row(c).Padding(4, 8).Gap(4).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(colors.line).Children(func() {
+		toolbar := ui.Row(c).Padding(4, 8).Gap(4).BorderWidth(0, 0, 1, 0).BorderColor(colors.line)
+		if a.settings.FilePathBreadcrumbs {
+			toolbar.AlignItems(ui.Center)
+		}
+		toolbar.Children(func() {
 			a.filePathBar(c, s)
 			if widgets.IconButton(c, "arrow-up", locales.ParentFolder()).Clicked() && f.cwd != "" {
 				a.openDir(s, path.Dir(f.cwd))

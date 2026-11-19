@@ -5,6 +5,7 @@ import (
 	"path"
 	"testing"
 
+	"finallyshell/internal/config"
 	"finallyshell/locales"
 
 	"github.com/egoist/mygo/ui"
@@ -42,6 +43,43 @@ func TestFilePathBar(t *testing.T) {
 			t.Fatal("path editor button is missing")
 		}
 		tt.ClickAt(b.Bounds.X+b.Bounds.W/2, b.Bounds.Y+b.Bounds.H/2)
+	}
+	a.openDir(s, child)
+	waitDir(child)
+	checkInput := func(want string) {
+		t.Helper()
+		in, ok := tt.AccessByRole(ui.RoleTextField, locales.EditRemotePath())
+		if !ok || in.Value != want {
+			t.Fatalf("path input = %q, present %v; want %q", in.Value, ok, want)
+		}
+		if _, ok := tt.AccessByRole(ui.RoleToggleButton, locales.EditRemotePath()); ok {
+			t.Fatal("path input mode shows the pencil")
+		}
+	}
+	checkInput(child)
+	click(locales.EditRemotePath())
+	tt.Key(ui.Cmd, ui.KeyA)
+	tt.Type("..")
+	tt.Key(0, ui.KeyEnter)
+	waitDir(parent)
+	checkInput(parent)
+
+	a.openOptions()
+	options := p.show(t, WindowOptions)
+	choose := func(label string) {
+		t.Helper()
+		if err := options.Click(label); err != nil {
+			t.Fatal(err)
+		}
+		tt.Frame()
+	}
+	choose(locales.OptionsFileManager())
+	if radio, ok := options.AccessByRole(ui.RoleRadio, locales.FilePathBarInput()); !ok || !radio.Checked {
+		t.Fatal("path input is not selected by default")
+	}
+	choose(locales.FilePathBarBreadcrumbs())
+	if !a.settings.FilePathBreadcrumbs || !config.LoadSettings().FilePathBreadcrumbs {
+		t.Fatal("breadcrumb preference was not saved")
 	}
 	a.openDir(s, child)
 	waitDir(child)
@@ -89,4 +127,11 @@ func TestFilePathBar(t *testing.T) {
 		t.Fatalf("hidden ancestor: %v, menu %q", err, tt.Menu())
 	}
 	waitDir(home)
+
+	edit("/unfinished")
+	choose(locales.FilePathBarInput())
+	checkInput(home)
+	if s.files.pathEditing || a.settings.FilePathBreadcrumbs || config.LoadSettings().FilePathBreadcrumbs {
+		t.Fatal("switching to path input did not clear the draft and save the choice")
+	}
 }

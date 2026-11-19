@@ -13,6 +13,13 @@ import (
 
 func (a *App) filePathBar(c *ui.Context, s *Session) {
 	f := &s.files
+	if !a.settings.FilePathBreadcrumbs {
+		if ui.TextInput(c.Key("file-path-input"), &f.pathEdit).Grow(1).MinWidth(0).Label(locales.EditRemotePath()).Submitted() {
+			a.openDir(s, f.pathEdit)
+		}
+		return
+	}
+
 	editing := f.pathEditing
 	border := theme.Border
 	if editing {
@@ -54,6 +61,13 @@ func (a *App) filePathBar(c *ui.Context, s *Session) {
 			c.Invalidate()
 		}
 	})
+}
+
+// resetFilePathEdits keeps a draft from one style from appearing in the other.
+func (a *App) resetFilePathEdits() {
+	for _, s := range a.sessions {
+		s.files.pathEditing, s.files.pathEdit = false, s.files.cwd
+	}
 }
 
 func (a *App) fileBreadcrumbs(c *ui.Context, s *Session) {

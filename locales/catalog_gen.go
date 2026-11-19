@@ -7094,6 +7094,36 @@ func (msgs Messages) OptionsFileManager() string {
 	return Catalog.Format(msgs.locale, "optionsFileManager", nil)
 }
 
+// FilePathBarStyle says "Path bar style"
+// in the language the app shows.
+func FilePathBarStyle() string { return In(i18n.Locale()).FilePathBarStyle() }
+
+// FilePathBarStyle says "Path bar style"
+// in the language of msgs.
+func (msgs Messages) FilePathBarStyle() string {
+	return Catalog.Format(msgs.locale, "filePathBarStyle", nil)
+}
+
+// FilePathBarInput says "Path input"
+// in the language the app shows.
+func FilePathBarInput() string { return In(i18n.Locale()).FilePathBarInput() }
+
+// FilePathBarInput says "Path input"
+// in the language of msgs.
+func (msgs Messages) FilePathBarInput() string {
+	return Catalog.Format(msgs.locale, "filePathBarInput", nil)
+}
+
+// FilePathBarBreadcrumbs says "Breadcrumb navigation"
+// in the language the app shows.
+func FilePathBarBreadcrumbs() string { return In(i18n.Locale()).FilePathBarBreadcrumbs() }
+
+// FilePathBarBreadcrumbs says "Breadcrumb navigation"
+// in the language of msgs.
+func (msgs Messages) FilePathBarBreadcrumbs() string {
+	return Catalog.Format(msgs.locale, "filePathBarBreadcrumbs", nil)
+}
+
 // OptionsFileIcons says "File icon theme"
 // in the language the app shows.
 func OptionsFileIcons() string { return In(i18n.Locale()).OptionsFileIcons() }
