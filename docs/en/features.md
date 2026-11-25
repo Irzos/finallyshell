@@ -1919,10 +1919,10 @@ and kept in `quickcommands.json` (see
   Esc gives it up). A group's context menu renames it or deletes it,
   after asking; its commands are kept, in no group, under "All".
 - The commands of the group chosen are buttons on the right, in rows
-  that wrap. A button shows the command's name and, in gray, the command
-  when it is one line, or how many lines it has; its tooltip is the
-  whole command. The search box above them filters by name and by
-  command, ignoring case.
+  that wrap. The name is shown above a gray command preview or line
+  count. Long names wrap within the button. Its tooltip shows the whole
+  command. The search box above filters by name and by command, ignoring
+  case.
 - A click sends the command to the session, through the same path as
   the command bar's Enter: in the session's encoding, the file panel
   following the shell's folder as it does after Enter, and each line that

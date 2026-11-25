@@ -142,6 +142,51 @@ func TestQuickCommandsSend(t *testing.T) {
 	p.SetLocale("en")
 }
 
+// The preview goes below the name, which wraps even when a long preview
+// would have taken all the available space in a single row.
+func TestQuickCommandNameWraps(t *testing.T) {
+	for _, tc := range []struct {
+		lang, short, long string
+	}{
+		{"en", "Memory", "Install and start Fail2ban brute-force protection (Debian 12 compatible)"},
+		{"zh-Hans", "内存", "安装并启动 Fail2ban 防爆破（Debian 12 兼容版）"},
+	} {
+		t.Run(tc.lang, func(t *testing.T) {
+			a, p := testApp(t)
+			const shortCommand = "free -h"
+			const longCommand = "apt-get update && apt-get install -y fail2ban"
+			store := config.NewQuickCommands()
+			store.AddCommand(&config.QuickCommand{Name: tc.short, Text: shortCommand}, "")
+			store.AddCommand(&config.QuickCommand{Name: tc.long, Text: longCommand}, "")
+
+			const width = 180
+			tt := ui.NewTester(func(c *ui.Context) {
+				ui.Column(c).Fill().Children(func() {
+					a.quickButtons(c, store, nil, true)
+				})
+			}, width, 240)
+			p.tt = tt
+			p.SetLocale(tc.lang)
+
+			shortButton, okShort := tt.Find(tc.short)
+			shortPreview, okShortPreview := tt.Find(shortCommand)
+			longButton, okLong := tt.Find(tc.long)
+			longPreview, okLongPreview := tt.Find(longCommand)
+			if !okShort || !okShortPreview || !okLong || !okLongPreview {
+				t.Fatalf("missing command names or previews: %q", tt.Texts())
+			}
+			if longButton.W > width-16 || longPreview.W >= longButton.W {
+				t.Errorf("long button or preview escaped the narrow column: button %+v, preview %+v", longButton, longPreview)
+			}
+			if longPreview.Y-longButton.Y <= shortPreview.Y-shortButton.Y+shortPreview.H/2 {
+				t.Errorf("long name did not wrap above its preview: long button %+v, long preview %+v, short button %+v, short preview %+v",
+					longButton, longPreview, shortButton, shortPreview)
+			}
+			saveShot(t, tt, "quick-command-name-wrap-"+tc.lang+".png")
+		})
+	}
+}
+
 // The buttons of a session that is not connected, or of a new tab, are
 // shown but send nothing.
 func TestQuickCommandsDisabled(t *testing.T) {

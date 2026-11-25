@@ -437,7 +437,7 @@ func (a *App) quickButtons(c *ui.Context, store *config.QuickCommands, s *Sessio
 	// built: the loop goes on over the list as it was.
 	var act func()
 	area := ui.Scroll(c.Key("quick-buttons")).Grow(1).MinHeight(0).Children(func() {
-		ui.Row(c).Wrap().Gap(6).Padding(2, 8, 8, 8).Children(func() {
+		ui.Row(c).Wrap().AlignItems(ui.Start).Gap(6).Padding(2, 8, 8, 8).Children(func() {
 			for _, cmd := range cmds {
 				a.quickButton(c, store, s, live, cmd, &act)
 			}
@@ -465,14 +465,16 @@ func (a *App) quickButtons(c *ui.Context, store *config.QuickCommands, s *Sessio
 	}
 }
 
-// quickButton is cmd's button: its name and, in gray, its one line, or
-// how many lines it has. A click sends it; it drags, and takes a command
-// dropped on it; its context menu has the rest.
+// quickButton shows the name above the command preview, so a long command
+// cannot take space from its name. A click sends it, and it can be dragged
+// or receive a drop.
 func (a *App) quickButton(c *ui.Context, store *config.QuickCommands, s *Session, live bool, cmd *config.QuickCommand, act *func()) {
 	lines := config.QuickCommandLines(cmd.Text)
 	title := cmd.Title()
+	named := strings.TrimSpace(cmd.Name) != ""
 	btn := ui.Button(c.Key(cmd.ID), "").Label(title).Tooltip(cmd.Text).AccessDisabled(!live).
-		MaxWidth(420).MinWidth(0).Border(1, theme.Border).Drag(quickDrag{cmd.ID})
+		Column().AlignItems(ui.Stretch).Gap(2).MaxWidth(420).MinWidth(0).Shrink(1).
+		Border(1, theme.Border).Drag(quickDrag{cmd.ID})
 	switch {
 	case btn.Dragging():
 		btn.Opacity(0.4)
@@ -483,14 +485,17 @@ func (a *App) quickButton(c *ui.Context, store *config.QuickCommands, s *Session
 		btn.Border(1, theme.Accent)
 	}
 	btn.Children(func() {
-		ui.Text(c, title).SingleLine().Ellipsis("…").MinWidth(0).Shrink(1)
+		name := ui.Text(c, title).FontWeight(600).MinWidth(0)
+		if !named {
+			name.SingleLine()
+		}
 		switch {
 		case len(lines) > 1:
 			ui.Text(c, locales.QuickLines(len(lines))).FontSize(11).TextColor(theme.TextMuted).
-				Padding(0, 4).Border(1, theme.Border).Radius(3).SingleLine().Shrink(0)
-		case len(lines) == 1 && strings.TrimSpace(cmd.Name) != "":
+				Padding(0, 4).Border(1, theme.Border).Radius(3).SingleLine().AlignSelf(ui.Start)
+		case len(lines) == 1 && named:
 			ui.Text(c, strings.TrimSpace(lines[0])).Font("monospace").FontSize(12).TextColor(theme.TextMuted).
-				SingleLine().Ellipsis("…").MinWidth(0).Shrink(1)
+				SingleLine().MinWidth(0)
 		}
 	})
 	btn.ContextMenu(func(m *ui.Menu) {
