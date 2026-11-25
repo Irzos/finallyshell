@@ -333,28 +333,28 @@ func (a *App) fileDialogView(c *ui.Context, d *fileDialog) {
 }
 
 // fileDeleteMenu groups the two deletion methods when Fast Delete is enabled.
-// The file table advertises Delete as a shortcut for the regular method.
+// The file table shows the Delete shortcut next to the top-level entry.
 func (a *App) fileDeleteMenu(m *ui.Menu, s *Session, selected, shortcut bool, run func(quick bool)) {
-	regular := func(m *ui.Menu, label string) {
-		item := m.Item(label).Disabled(!selected)
-		if shortcut {
-			item.Shortcut(0, ui.KeyDelete)
-		}
+	var item *ui.MenuItem
+	if a.settings.SFTPQuickDelete {
+		item = m.Submenu(locales.Delete(), func(m *ui.Menu) {
+			if m.Item(locales.SftpRegularDelete()).Disabled(!selected).Chosen() && selected {
+				run(false)
+			}
+			fast := selected && s.client != nil
+			if m.Item(locales.SftpQuickDelete()).Disabled(!fast).Chosen() && fast {
+				run(true)
+			}
+		}).Disabled(!selected)
+	} else {
+		item = m.Item(locales.Delete()).Disabled(!selected)
 		if item.Chosen() && selected {
 			run(false)
 		}
 	}
-	if !a.settings.SFTPQuickDelete {
-		regular(m, locales.Delete())
-		return
+	if shortcut {
+		item.Shortcut(0, ui.KeyDelete)
 	}
-	m.Submenu(locales.Delete(), func(m *ui.Menu) {
-		regular(m, locales.SftpRegularDelete())
-		fast := selected && s.client != nil
-		if m.Item(locales.SftpQuickDelete()).Disabled(!fast).Chosen() && fast {
-			run(true)
-		}
-	}).Disabled(!selected)
 }
 
 // treeMenu is the context menu of the folder dir in the folder tree: it

@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"testing"
 
@@ -62,12 +63,7 @@ func (f *editorFixture) showInTree(t *testing.T, p string) {
 
 func TestFileQuickDeleteOption(t *testing.T) {
 	f := newEditorFixture(t)
-	a := f.a
-	tt := ui.NewTester(func(c *ui.Context) {
-		c.SetMenuPresentation(ui.PopoverMenus)
-		a.View(c)
-	}, 1280, 820)
-	f.tt, f.p.tt = tt, tt
+	a, tt := f.a, f.tt
 	tableMenu(t, tt, "app.yaml")
 	if err := tt.ChooseMenuItem(locales.Delete(), locales.SftpQuickDelete()); err == nil {
 		t.Fatal("fast delete is available by default")
@@ -123,6 +119,14 @@ func TestFileQuickDeleteOption(t *testing.T) {
 	tt.Move(entry.X+entry.W/2, entry.Y+entry.H/2)
 	if !tt.HasText(locales.SftpRegularDelete()) || !tt.HasText(locales.SftpQuickDelete()) {
 		t.Fatalf("Delete submenu is missing an action: %q", tt.Texts())
+	}
+	keyLabel := "Delete"
+	if runtime.GOOS == "darwin" {
+		keyLabel = "⌦"
+	}
+	hint, ok := tt.Find(keyLabel)
+	if !ok || hint.X <= entry.X || hint.X >= entry.X+entry.W || hint.Y >= entry.Y+entry.H {
+		t.Fatalf("Delete key hint is not on the parent menu item: parent %+v, hint %+v", entry, hint)
 	}
 	saveShot(t, tt, "file-fast-delete-menu-zh.png")
 	if err := tt.ChooseMenuItem(locales.Delete(), locales.SftpQuickDelete()); err != nil {

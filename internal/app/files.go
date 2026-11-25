@@ -373,7 +373,7 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 		if del && f.chosen.Len() > 0 {
 			a.deleteChosen(s, false)
 		}
-		t.ContextMenu(func(m *ui.Menu) {
+		menu := func(m *ui.Menu) {
 			names := f.chosenNames()
 			if e, ok := f.entry(names); ok && editable(e) {
 				if m.Item(locales.Edit()).Chosen() {
@@ -406,7 +406,13 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 			if len(names) == 1 && m.Item(locales.CopyPath()).Chosen() {
 				c.WriteClipboard(path.Join(f.cwd, names[0]))
 			}
-		})
+		}
+		if a.settings.SFTPQuickDelete {
+			// Native menus can omit shortcuts on submenu rows.
+			t.PopoverMenu(menu)
+		} else {
+			t.ContextMenu(menu)
+		}
 		if over {
 			ui.Text(c, locales.DropToUpload(f.cwd)).Padding(6, 12).Radius(6).
 				Background(theme.Accent).TextColor(theme.AccentText).
