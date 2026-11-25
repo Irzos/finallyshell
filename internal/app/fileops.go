@@ -35,6 +35,7 @@ type fileDialog struct {
 	isDir bool     // what is renamed is a folder
 	names []string // the names in dir a delete removes
 	dirs  bool     // a delete removes folders, with what they hold
+	quick bool     // delete over SSH with rm
 	name  string
 	// selectStem selects the name without its extension as the dialog
 	// opens, as Finder and Explorer do for a rename.
@@ -79,15 +80,15 @@ func (a *App) askNew(s *Session, dir string, op fileOp) {
 
 // askDelete asks before deleting the names in dir; dirs tells that some
 // are folders.
-func (a *App) askDelete(s *Session, dir string, names []string, dirs bool) {
-	if s.sftp == nil || dir == "" || len(names) == 0 {
+func (a *App) askDelete(s *Session, dir string, names []string, dirs, quick bool) {
+	if s.sftp == nil || dir == "" || len(names) == 0 || quick && s.client == nil {
 		return
 	}
-	a.fileDlg = &fileDialog{sess: s, op: opDelete, dir: dir, names: names, dirs: dirs}
+	a.fileDlg = &fileDialog{sess: s, op: opDelete, dir: dir, names: names, dirs: dirs, quick: quick}
 }
 
 // askDeleteChosen asks before deleting the rows chosen in the table.
-func (a *App) askDeleteChosen(s *Session) {
+func (a *App) askDeleteChosen(s *Session, quick bool) {
 	f := &s.files
 	names := f.chosenNames()
 	dirs := false
@@ -97,7 +98,7 @@ func (a *App) askDeleteChosen(s *Session) {
 			dirs = true
 		}
 	}
-	a.askDelete(s, f.cwd, names, dirs)
+	a.askDelete(s, f.cwd, names, dirs, quick)
 }
 
 func (a *App) closeFileDialog(d *fileDialog) {
@@ -112,7 +113,7 @@ func (a *App) closeFileDialog(d *fileDialog) {
 // runFileDialog does what d asks on the server, in a goroutine. The
 // dialog closes when it is done, or shows the error.
 func (a *App) runFileDialog(d *fileDialog) {
-	sc := d.sess.sftp
+	sc, client := d.sess.sftp, d.sess.client
 	if sc == nil || d.busy {
 		return
 	}
@@ -135,6 +136,10 @@ func (a *App) runFileDialog(d *fileDialog) {
 		case opCreate:
 			made, err = remotefs.CreateFile(sc, d.dir, name)
 		case opDelete:
+			if d.quick {
+				gone, err = remotefs.RemoveWithShell(ctx, client, sc, d.dir, d.names)
+				break
+			}
 			for _, n := range d.names {
 				p := path.Join(d.dir, n)
 				if err = remotefs.RemoveAll(ctx, sc, p); err != nil {
@@ -296,6 +301,9 @@ func (a *App) fileDialogView(c *ui.Context, d *fileDialog) {
 			ok := locales.Ok()
 			if d.op == opDelete {
 				ok = locales.Delete()
+				if d.quick {
+					ok = locales.SftpQuickDelete()
+				}
 			}
 			if ui.PrimaryButton(c, ok).Disabled(d.busy || empty).Clicked() {
 				submit = true
@@ -332,7 +340,10 @@ func (a *App) treeMenu(c *ui.Context, m *ui.Menu, s *Session, dir string) {
 			a.askRename(s, dir, true)
 		}
 		if m.Item(locales.Delete()).Chosen() {
-			a.askDelete(s, path.Dir(dir), []string{path.Base(dir)}, true)
+			a.askDelete(s, path.Dir(dir), []string{path.Base(dir)}, true, false)
+		}
+		if a.settings.SFTPQuickDelete && m.Item(locales.SftpQuickDelete()).Disabled(s.client == nil).Chosen() {
+			a.askDelete(s, path.Dir(dir), []string{path.Base(dir)}, true, true)
 		}
 	}
 	m.Separator()

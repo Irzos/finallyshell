@@ -1443,10 +1443,16 @@ permission denied) show in the dialog, which stays open.
 
 Delete always asks first. A folder is deleted with everything in it. Links
 are never followed: deleting a link to a folder removes the link, not the
-folder it points to. Up to 16 files of a folder are removed at the same
-time, so large folders don't wait for each round trip. Canceling the
-dialog stops a delete that is still running; what was already removed
-stays removed.
+folder it points to. Regular Delete uses SFTP and removes up to 16 files
+of a folder at the same time. Canceling the dialog stops a delete that is
+still running; what was already removed stays removed.
+
+**Options › File manager › Show Quick Delete (rm)** adds **Quick Delete
+(rm)** below **Delete** in the file table and folder tree. It is off by
+default. It asks for confirmation and runs `rm` recursively in a single
+SSH command, which avoids per-file SFTP round trips. It requires SSH
+command execution and a server where the shell and SFTP see the same
+paths. The dialog shows any command error.
 
 After a change the folder is listed again and a renamed or new item is
 chosen in the table. When the current folder, or one it is in, is

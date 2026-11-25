@@ -7074,6 +7074,36 @@ func (msgs Messages) OptionsFileManager() string {
 	return Catalog.Format(msgs.locale, "optionsFileManager", nil)
 }
 
+// OptionSftpQuickDelete says "Show Quick Delete (rm)"
+// in the language the app shows.
+func OptionSftpQuickDelete() string { return In(i18n.Locale()).OptionSftpQuickDelete() }
+
+// OptionSftpQuickDelete says "Show Quick Delete (rm)"
+// in the language of msgs.
+func (msgs Messages) OptionSftpQuickDelete() string {
+	return Catalog.Format(msgs.locale, "optionSftpQuickDelete", nil)
+}
+
+// OptionSftpQuickDeleteNote says "Adds a confirmed delete action that runs rm on the server. Requires SSH command execution."
+// in the language the app shows.
+func OptionSftpQuickDeleteNote() string { return In(i18n.Locale()).OptionSftpQuickDeleteNote() }
+
+// OptionSftpQuickDeleteNote says "Adds a confirmed delete action that runs rm on the server. Requires SSH command execution."
+// in the language of msgs.
+func (msgs Messages) OptionSftpQuickDeleteNote() string {
+	return Catalog.Format(msgs.locale, "optionSftpQuickDeleteNote", nil)
+}
+
+// SftpQuickDelete says "Quick Delete (rm)"
+// in the language the app shows.
+func SftpQuickDelete() string { return In(i18n.Locale()).SftpQuickDelete() }
+
+// SftpQuickDelete says "Quick Delete (rm)"
+// in the language of msgs.
+func (msgs Messages) SftpQuickDelete() string {
+	return Catalog.Format(msgs.locale, "sftpQuickDelete", nil)
+}
+
 // OptionsFileIcons says "File icon theme"
 // in the language the app shows.
 func OptionsFileIcons() string { return In(i18n.Locale()).OptionsFileIcons() }

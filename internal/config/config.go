@@ -223,6 +223,8 @@ type Settings struct {
 	// "<publisher>.<extension>/<theme>" for one installed from a VSIX or in
 	// an editor such as VS Code.
 	FileIconTheme string `json:"fileIconTheme,omitempty"`
+	// SFTPQuickDelete shows the opt-in Quick Delete (rm) menu item on this device.
+	SFTPQuickDelete bool `json:"sftpQuickDelete,omitempty"`
 	// NoFollowTerminalDir keeps the file panel where the user browsed it
 	// when the shell's working directory changes; by default the panel
 	// goes to it (the toggle in the panel's toolbar).
