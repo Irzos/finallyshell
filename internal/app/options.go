@@ -196,4 +196,8 @@ func (a *App) fileManagerPage(c *ui.Context) {
 		a.changeSettings(func() { a.settings.SFTPQuickDelete = enabled })
 	}
 	widgets.Muted(c, locales.OptionSftpQuickDeleteNote()).FontSize(12).PaddingStart(18)
+	confirm := !a.settings.NoConfirmSFTPQuickDelete
+	if ui.Checkbox(c, &confirm, locales.OptionConfirmSftpQuickDelete()).Disabled(!a.settings.SFTPQuickDelete).Changed() {
+		a.changeSettings(func() { a.settings.NoConfirmSFTPQuickDelete = !confirm })
+	}
 }

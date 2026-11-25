@@ -371,7 +371,7 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 			a.askRename(s, path.Join(f.cwd, e.Name), e.IsDir())
 		}
 		if del && f.chosen.Len() > 0 {
-			a.askDeleteChosen(s, false)
+			a.deleteChosen(s, false)
 		}
 		t.ContextMenu(func(m *ui.Menu) {
 			names := f.chosenNames()
@@ -396,12 +396,9 @@ func (a *App) fileTable(c *ui.Context, s *Session) {
 			if m.Item(locales.Rename()).Shortcut(0, ui.KeyF2).Disabled(!one).Chosen() && one {
 				a.askRename(s, path.Join(f.cwd, e.Name), e.IsDir())
 			}
-			if m.Item(locales.Delete()).Shortcut(0, ui.KeyDelete).Disabled(len(names) == 0).Chosen() && len(names) > 0 {
-				a.askDeleteChosen(s, false)
-			}
-			if a.settings.SFTPQuickDelete && m.Item(locales.SftpQuickDelete()).Disabled(len(names) == 0 || s.client == nil).Chosen() {
-				a.askDeleteChosen(s, true)
-			}
+			a.fileDeleteMenu(m, s, len(names) > 0, true, func(quick bool) {
+				a.deleteChosen(s, quick)
+			})
 			m.Separator()
 			if m.Item(locales.Refresh()).Chosen() {
 				a.openDir(s, f.cwd)

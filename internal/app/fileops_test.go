@@ -29,10 +29,10 @@ func (f *editorFixture) exists(name string) bool {
 }
 
 // menu right-clicks the row of name and chooses item from its menu.
-func (f *editorFixture) menu(t *testing.T, name, item string) {
+func (f *editorFixture) menu(t *testing.T, name string, item ...string) {
 	t.Helper()
 	f.tt.RightClickAt(rowCenter(t, f.tt, name))
-	if err := f.tt.ChooseMenuItem(item); err != nil {
+	if err := f.tt.ChooseMenuItem(item...); err != nil {
 		t.Fatalf("%s: %v; menu %q", name, err, f.tt.Menu())
 	}
 	f.tt.Frame()
@@ -62,9 +62,15 @@ func (f *editorFixture) showInTree(t *testing.T, p string) {
 
 func TestFileQuickDeleteOption(t *testing.T) {
 	f := newEditorFixture(t)
-	a, tt := f.a, f.tt
-	if menu := tableMenu(t, tt, "app.yaml"); slices.Contains(menu, locales.SftpQuickDelete()) {
-		t.Fatalf("quick delete is visible by default: %q", menu)
+	a := f.a
+	tt := ui.NewTester(func(c *ui.Context) {
+		c.SetMenuPresentation(ui.PopoverMenus)
+		a.View(c)
+	}, 1280, 820)
+	f.tt, f.p.tt = tt, tt
+	tableMenu(t, tt, "app.yaml")
+	if err := tt.ChooseMenuItem(locales.Delete(), locales.SftpQuickDelete()); err == nil {
+		t.Fatal("fast delete is available by default")
 	}
 	tt.CloseMenu()
 	a.openOptions()
@@ -73,34 +79,32 @@ func TestFileQuickDeleteOption(t *testing.T) {
 		t.Fatal(err)
 	}
 	options.Frame()
-	saveShot(t, options, "options-quick-delete-en.png")
 	if err := options.Click(locales.OptionSftpQuickDelete()); err != nil {
 		t.Fatal(err)
 	}
 	if !a.settings.SFTPQuickDelete || !config.LoadSettings().SFTPQuickDelete {
 		t.Fatal("quick delete setting did not persist")
 	}
+	saveShot(t, options, "options-fast-delete-en.png")
 	f.p.SetLocale("zh-Hans")
 	options.Frame()
-	saveShot(t, options, "options-quick-delete-zh.png")
+	saveShot(t, options, "options-fast-delete-zh.png")
 	f.p.SetLocale("en")
 	if err := options.Click(locales.Done()); err != nil {
 		t.Fatal(err)
 	}
 
-	menu := tableMenu(t, tt, "app.yaml")
-	i := slices.Index(menu, locales.Delete())
-	if i == -1 || i+1 == len(menu) || menu[i+1] != locales.SftpQuickDelete() {
-		t.Fatalf("quick delete is not directly after Delete: %q", menu)
+	if menu := tableMenu(t, tt, "app.yaml"); !slices.Contains(menu, locales.Delete()) || slices.Contains(menu, locales.SftpQuickDelete()) {
+		t.Fatalf("expected a Delete submenu without a top-level Fast Delete item: %q", menu)
 	}
-	if err := tt.ChooseMenuItem(locales.SftpQuickDelete()); err != nil {
+	if err := tt.ChooseMenuItem(locales.Delete(), locales.SftpQuickDelete()); err != nil {
 		t.Fatal(err)
 	}
 	tt.Frame()
 	if d := a.fileDlg; d == nil || !d.quick || d.busy || !f.exists("app.yaml") {
 		t.Fatalf("quick delete did not wait for confirmation: %+v", d)
 	}
-	saveShot(t, tt, "file-quick-delete-en.png")
+	saveShot(t, tt, "file-fast-delete-en.png")
 	if err := tt.Click(locales.Cancel()); err != nil {
 		t.Fatal(err)
 	}
@@ -111,8 +115,21 @@ func TestFileQuickDeleteOption(t *testing.T) {
 	// This SFTP server refuses exec, so the error stays in the dialog.
 	f.p.SetLocale("zh-Hans")
 	tt.Frame()
-	f.menu(t, "app.yaml", locales.SftpQuickDelete())
-	saveShot(t, tt, "file-quick-delete-zh.png")
+	tableMenu(t, tt, "app.yaml")
+	entry, ok := tt.Find(locales.Delete())
+	if !ok {
+		t.Fatal("Delete is missing from the context menu")
+	}
+	tt.Move(entry.X+entry.W/2, entry.Y+entry.H/2)
+	if !tt.HasText(locales.SftpRegularDelete()) || !tt.HasText(locales.SftpQuickDelete()) {
+		t.Fatalf("Delete submenu is missing an action: %q", tt.Texts())
+	}
+	saveShot(t, tt, "file-fast-delete-menu-zh.png")
+	if err := tt.ChooseMenuItem(locales.Delete(), locales.SftpQuickDelete()); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	saveShot(t, tt, "file-fast-delete-zh.png")
 	if err := tt.Click(locales.SftpQuickDelete()); err != nil {
 		t.Fatal(err)
 	}
@@ -123,9 +140,34 @@ func TestFileQuickDeleteOption(t *testing.T) {
 	if err := tt.Click(locales.Cancel()); err != nil {
 		t.Fatal(err)
 	}
-	f.menu(t, "app.yaml", locales.Delete())
-	if d := a.fileDlg; d == nil || d.quick {
-		t.Fatalf("regular delete did not use SFTP: %+v", d)
+
+	a.openOptions()
+	options = f.p.show(t, WindowOptions)
+	if err := options.Click(locales.OptionConfirmSftpQuickDelete()); err != nil {
+		t.Fatal(err)
+	}
+	if !a.settings.NoConfirmSFTPQuickDelete || !config.LoadSettings().NoConfirmSFTPQuickDelete {
+		t.Fatal("fast deletion confirmation setting did not persist")
+	}
+	saveShot(t, options, "options-fast-delete-no-confirm-zh.png")
+	if err := options.Click(locales.Done()); err != nil {
+		t.Fatal(err)
+	}
+	f.menu(t, "app.yaml", locales.Delete(), locales.SftpQuickDelete())
+	f.settled(t)
+	if d := a.fileDlg; d == nil || !d.skipConfirmation || d.err == nil || !f.exists("app.yaml") {
+		t.Fatalf("fast deletion did not start immediately or show the exec error: %+v", d)
+	}
+	if tt.HasText(locales.DeleteFileTitle("app.yaml")) || !tt.HasText(locales.Retry()) {
+		t.Fatalf("fast deletion showed a confirmation or missed retry: %q", tt.Texts())
+	}
+	if err := tt.Click(locales.Cancel()); err != nil {
+		t.Fatal(err)
+	}
+
+	f.menu(t, "app.yaml", locales.Delete(), locales.SftpRegularDelete())
+	if d := a.fileDlg; d == nil || d.quick || d.busy || !tt.HasText(locales.DeleteFileTitle("app.yaml")) {
+		t.Fatalf("regular delete did not wait for confirmation: %+v", d)
 	}
 	if err := tt.Click(locales.Delete()); err != nil {
 		t.Fatal(err)
@@ -260,7 +302,7 @@ func TestFileOpsInTable(t *testing.T) {
 
 	// A delete that fails half way asks again for what is left: here
 	// ghost isn't there, so the first try removes legacy.ini and fails.
-	a.askDelete(s, f.dir, []string{"legacy.ini", "ghost"}, false, false)
+	a.deleteFiles(s, f.dir, []string{"legacy.ini", "ghost"}, false, false)
 	tt.Frame()
 	tt.Click(locales.Delete())
 	f.settled(t)
